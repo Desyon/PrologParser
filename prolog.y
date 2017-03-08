@@ -45,15 +45,16 @@ void yyerror(const char *s) {
 
 %%
 
-start:      cmdList {fprintf(stderr, "\tbison: start:\tcmds\n");}
-            ;
-cmdList:    cmd DOT cmdList {fprintf(stderr, "\tbison: cmds:\tcmd cmds\n");}
-            | cmd DOT     {fprintf(stderr, "\tbison: cmds:\tcmd\n");}
+start:  cmdList {fprintf(stderr, "\tbison: start:\tcmds\n");}
+        ;
+
+cmdList:    cmd cmdList {fprintf(stderr, "\tbison:\tcmd cmdList\n")}
+            | cmd DOT {fprintf(stderr, "\tbison:\tcmd DOT\n")}
             ;
 
-cmd:        VAR {}
-            | CONST {}
-            ;
+cmd:    VAR {fprintf(stderr, "\tbison:\tVAR\n")}
+        | CONST {fprintf(stderr, "\tbison:\tCONST\n")}
+        ;
 
 %%
 

@@ -62,4 +62,4 @@ SPACE       (\s+)
 {UNEQUAL}   {printf("flex: UNEQUAL\n"); return UNEQUAL;}
 {INT}       {printf("flex: INT\n"); return INT;}
 {FLOAT}     {printf("flex: FLOAT\n"); return FLOAT;}
-{EOL}       {printf("flex: EOL\n");}
+{EOL}       {printf("flex: EOL\n"); lines++;}

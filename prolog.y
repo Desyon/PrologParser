@@ -43,6 +43,9 @@ void yyerror(const char *s) {
 %token INT
 %token FLOAT
 
+%left ADD SUB
+%left MUL DIV
+
 %%
 
 line:   fact DOT {fprintf(stderr, "\tbison: line:\tfact DOT\n");}
@@ -62,6 +65,7 @@ argList:    arg {fprintf(stderr, "\tbison: argList:\targ\n");}
 arg:        fact {fprintf(stderr, "\tbison: arg:\tfact\n");}
             | list {fprintf(stderr, "\tbison: arg:\tfact\n");}
             | rule {fprintf(stderr, "\tbison: arg:\trule\n");}
+            | mathexpr {fprintf(stderr, "\tbison: arg:\tmathexpr\n");}
             | VAR {fprintf(stderr, "\tbison: arg:\tVAR\n");}
             ;
 
@@ -95,6 +99,19 @@ num:        INT {fprintf(stderr, "\tbison: num:\tINT\n");}
             | FLOAT {fprintf(stderr, "\tbison: num:\tFLOAT\n");}
             | MINUS INT {fprintf(stderr, "\tbison: num:\tMINUS INT\n");}
             | MINUS FLOAT {fprintf(stderr, "\tbison: num:\tMINUS FLOAT\n");}
+            ;
+
+mathexpr:   operand operator operand %prec ADD {fprintf(stderr, "\tbison: mathexpr:\toperand operator operand\n");}
+            ;
+
+operand:    num {fprintf(stderr, "\tbison: operand:\tnum\n");}
+            | mathexpr {fprintf(stderr, "\tbison: operand:\tmathexpr\n");}
+            ;
+
+operator:   PLUS {fprintf(stderr, "\tbison: operator:\tPLUS\n");}
+            | MINUS {fprintf(stderr, "\tbison: operator:\tMINUS\n");}
+            | MULT {fprintf(stderr, "\tbison: operator:\tMULT\n");}
+            | DIV {fprintf(stderr, "\tbison: operator:\tDIV\n");}
             ;
 %%
 

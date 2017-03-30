@@ -26,7 +26,7 @@ DIV         (\/)
 SMALLER     (<)
 LARGER      (>)
 LEQUAL      (>=)
-EQUALS      (=<)
+SEQUAL      (=<)
 EQUAL       (=:=)
 UNEQUAL	    (=\\=)
 
@@ -57,7 +57,7 @@ SPACE       (\s+)
 {SMALLER}   {printf("flex: SMALLER.\n"); return SMALLER;}
 {LARGER}    {printf("flex: LARGER\n"); return LARGER;}
 {LEQUAL}    {printf("flex: LEQUAL\n"); return LEQUAL;}
-{EQUALS}    {printf("flex: EQUALS\n"); return EQUALS;}
+{SEQUAL}    {printf("flex: SEQUAL\n"); return SEQUAL;}
 {EQUAL}     {printf("flex: EQUAL\n"); return EQUAL;}
 {UNEQUAL}   {printf("flex: UNEQUAL\n"); return UNEQUAL;}
 {INT}       {printf("flex: INT\n"); return INT;}

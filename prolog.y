@@ -36,15 +36,18 @@ void yyerror(const char *s) {
 %token SMALLER
 %token LARGER
 %token LEQUAL
-%token EQUALS
+%token SEQUAL
 %token EQUAL
 %token UNEQUAL
 
 %token INT
 %token FLOAT
 
-%left ADD SUB
-%left MUL DIV
+%left EQUAL UNEQUAL SMALLER SEQUAL LARGER LEQUAL
+%left PLUS MINUS
+%left MULT DIV
+
+%right UMINUS
 
 %%
 
@@ -54,40 +57,42 @@ line:   fact DOT {fprintf(stderr, "\tbison: line:\tfact DOT\n");}
         | line rule DOT {fprintf(stderr, "\tbison: line:\trule DOT\n");}
         ;
 
-fact:   CONST POPEN argList PCLOSE {fprintf(stderr, "\tbison: fact:\tCONST POPEN argList PCLOSE\n");}
+rule:   fact DEF ruleargs {fprintf(stderr, "\tbison: rule:\tfact DEF ruleargs\n");}
+        ;
+
+fact:   CONST POPEN args PCLOSE {fprintf(stderr, "\tbison: fact:\tCONST POPEN args PCLOSE\n");}
         | CONST {fprintf(stderr, "\tbison: fact:\tCONST\n");}
         ;
 
-argList:    arg {fprintf(stderr, "\tbison: argList:\targ\n");}
-            | arg COM argList {fprintf(stderr, "\tbison: argList:\targ COM argList\n");}
+args:   arg {fprintf(stderr, "\tbison: args:\targ\n");}
+        | arg COM args {fprintf(stderr, "\tbison: args:\targ COM args\n");}
+        ;
+
+arg:    CONST {fprintf(stderr, "\tbison: arg:\tCONST\n");}
+        | list {fprintf(stderr, "\tbison: arg:\tfact\n");}
+        | mathexpr {fprintf(stderr, "\tbison: arg:\tmathexpr\n");}
+        ;
+
+ruleargs:   rulearg {fprintf(stderr, "\tbsion: ruleargs:\trulearg\n");}
+            | rulearg COM ruleargs {fprintf(stderr, "\tbsion: ruleargs:\trulearg COM ruleargs\n");}
             ;
 
-arg:        fact {fprintf(stderr, "\tbison: arg:\tfact\n");}
-            | list {fprintf(stderr, "\tbison: arg:\tfact\n");}
-            | rule {fprintf(stderr, "\tbison: arg:\trule\n");}
-            | mathexpr {fprintf(stderr, "\tbison: arg:\tmathexpr\n");}
-            | VAR {fprintf(stderr, "\tbison: arg:\tVAR\n");}
+rulearg:    fact {fprintf(stderr, "\tbsion: rulearg:\tfact\n");}
+            | compexpr {fprintf(stderr, "\tbsion: rulearg:\tcompexpr\n");}
+            | isexpr {fprintf(stderr, "\tbsion: rulearg:\tisexpr\n");}
             ;
 
-rule:       fact DEF factList {fprintf(stderr, "\tbison: rule:\tfact DEF factList\n");}
-            ;
-
-factList:   fact {fprintf(stderr, "\tbison: factList:\tfact\n");}
-            | fact COM factList {fprintf(stderr, "\tbison: factList:\tfact COM factList\n");}
-            ;
-
-list:       LOPEN lelements LCLOSE {fprintf(stderr, "\tbison: list:\tLOPEN lelement LCLOSE\n");}
+list:       LOPEN lelements LCLOSE {fprintf(stderr, "\tbison: list:\tLOPEN lelements LCLOSE\n");}
             | LOPEN LCLOSE {fprintf(stderr, "\tbison: list:\tLOPEN LCLOSE\n");}
             ;
 
-lelements:    lelement {fprintf(stderr, "\tbison: lelements:\tlelement\n");}
+lelements:  lelement {fprintf(stderr, "\tbison: lelements:\tlelement\n");}
             | lelement COM lelements {fprintf(stderr, "\tbison: list:\tlelement COM lelements\n");}
             | lelement PIPE ltail {fprintf(stderr, "\tbison: list:\tlelement PIPE ltail\n");}
             ;
 
-lelement:   VAR {fprintf(stderr, "\tbison: lelement:\tVAR\n");}
-            | CONST {fprintf(stderr, "\tbison: lelement:\tCONST\n");}
-            | num {fprintf(stderr, "\tbison: lelement:\tnum\n");}
+lelement:   CONST {fprintf(stderr, "\tbison: lelement:\tCONST\n");}
+            | mathexpr {fprintf(stderr, "\tbison: lelement:\tmathexpr\n");}
             | list {fprintf(stderr, "\tbison: lelement:\tlist\n");}
             ;
 
@@ -95,17 +100,15 @@ ltail:      lelement {fprintf(stderr, "\tbison: ltail:\tlelement\n");}
             | lelement COM ltail {fprintf(stderr, "\tbison: ltail:\tlelement COM ltail\n");}
             ;
 
+mathexpr:   num {fprintf(stderr, "\tbison: mathexpr:\tnum\n");}
+            | VAR {fprintf(stderr, "\tbison: mathexpr:\tVAR\n");}
+            | POPEN mathexpr PCLOSE {fprintf(stderr, "\tbison: mathexpr:\tPOPEN mathexpr PCLOSE\n");}
+            | MINUS mathexpr %prec UMINUS {fprintf(stderr, "\tbison: mathexpr:\tMINUS mathexpr\n");}
+            | mathexpr operator mathexpr %prec PLUS {fprintf(stderr, "\tbison: mathexpr:\tmathexpr operator mathexpr\n");}
+            ;
+
 num:        INT {fprintf(stderr, "\tbison: num:\tINT\n");}
             | FLOAT {fprintf(stderr, "\tbison: num:\tFLOAT\n");}
-            | MINUS INT {fprintf(stderr, "\tbison: num:\tMINUS INT\n");}
-            | MINUS FLOAT {fprintf(stderr, "\tbison: num:\tMINUS FLOAT\n");}
-            ;
-
-mathexpr:   operand operator operand %prec ADD {fprintf(stderr, "\tbison: mathexpr:\toperand operator operand\n");}
-            ;
-
-operand:    num {fprintf(stderr, "\tbison: operand:\tnum\n");}
-            | mathexpr {fprintf(stderr, "\tbison: operand:\tmathexpr\n");}
             ;
 
 operator:   PLUS {fprintf(stderr, "\tbison: operator:\tPLUS\n");}
@@ -113,6 +116,20 @@ operator:   PLUS {fprintf(stderr, "\tbison: operator:\tPLUS\n");}
             | MULT {fprintf(stderr, "\tbison: operator:\tMULT\n");}
             | DIV {fprintf(stderr, "\tbison: operator:\tDIV\n");}
             ;
+
+compexpr:   mathexpr compoperator mathexpr {fprintf(stderr, "\tbison: compexpr:\tmathexpr compoperator mathexpr\n");}
+
+compoperator: EQUAL {fprintf(stderr, "\tbison: compoperator:\tEQUAL\n");}
+              | UNEQUAL {fprintf(stderr, "\tbison: compoperator:\tUNEQUAL\n");}
+              | SMALLER {fprintf(stderr, "\tbison: compoperator:\tSMALLER\n");}
+              | SEQUAL {fprintf(stderr, "\tbison: compoperator:\tSEQUAL\n");}
+              | LARGER {fprintf(stderr, "\tbison: compoperator:\tLARGER\n");}
+              | LEQUAL {fprintf(stderr, "\tbison: compoperator:\tLEQUAL\n");}
+              ;
+
+isexpr:   VAR IS mathexpr {fprintf(stderr, "\tbison: isexpr:\tVAR IS mathexpr\n");}
+          ;
+
 %%
 
 int main(int, char**) {

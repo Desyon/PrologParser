@@ -4,10 +4,11 @@ CCLIBS=-lfl
 BINNAME=prolog
 SRC=src
 SRCGEN=build
+INC=include
 
 
 all: generate
-	$(CC) $(CCFLAGS) -o $(BINNAME) $(SRCGEN)/*.c $(CCLIBS)
+	$(CC) $(CCFLAGS) -o $(BINNAME) $(SRCGEN)/*.c -I $(INC)  $(CCLIBS)
 
 generate: $(SRCGEN)/prolog.tab.c $(SRCGEN)/lex.yy.c
 

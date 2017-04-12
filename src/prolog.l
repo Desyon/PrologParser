@@ -1,5 +1,7 @@
 %{
 #include "prolog.tab.h"
+#include "debug.h"
+
 #include <string.h>
 
 #define YY_DECL extern "C" int yylex()
@@ -40,27 +42,27 @@ SPACE       (\s+)
 
 %%
 
-{IS}        {printf("flex: IS\n"); return IS;}
-{CONST}     {printf("flex: CONST\n"); yylval.text = strdup(yytext); return CONST;}
-{VAR}       {printf("flex: VAR\n"); yylval.text = strdup(yytext); return VAR;}
-{POPEN}     {printf("flex: POPEN\n"); return POPEN;}
-{PCLOSE}    {printf("flex: PLCOSE\n"); return PCLOSE;}
-{DOT}       {printf("flex: DOT\n"); return DOT;}
-{DEF}       {printf("flex: DEF\n"); return DEF;}
-{LOPEN}     {printf("flex: LOPEN\n"); return LOPEN;}
-{LCLOSE}    {printf("flex: LCLOSE\n"); return LCLOSE;}
-{COM}       {printf("flex: COM\n"); return COM;}
-{PIPE}      {printf("flex: PIPE\n"); return PIPE;}
-{PLUS}      {printf("flex: PLUS\n"); return PLUS;}
-{MINUS}     {printf("flex: MINUS\n"); return MINUS;}
-{MULT}      {printf("flex: MULT\n"); return MULT;}
-{DIV}       {printf("flex: DIV\n"); return DIV;}
-{SMALLER}   {printf("flex: SMALLER.\n"); return SMALLER;}
-{LARGER}    {printf("flex: LARGER\n"); return LARGER;}
-{LEQUAL}    {printf("flex: LEQUAL\n"); return LEQUAL;}
-{SEQUAL}    {printf("flex: SEQUAL\n"); return SEQUAL;}
-{EQUAL}     {printf("flex: EQUAL\n"); return EQUAL;}
-{UNEQUAL}   {printf("flex: UNEQUAL\n"); return UNEQUAL;}
-{INT}       {printf("flex: INT\n"); return INT;}
-{FLOAT}     {printf("flex: FLOAT\n"); return FLOAT;}
-{EOL}       {printf("flex: EOL\n"); lines++;}
+{IS}        {DEBUG("flex: IS\n"); return IS;}
+{CONST}     {DEBUG("flex: CONST\n"); yylval.text = strdup(yytext); return CONST;}
+{VAR}       {DEBUG("flex: VAR\n"); yylval.text = strdup(yytext); return VAR;}
+{POPEN}     {DEBUG("flex: POPEN\n"); return POPEN;}
+{PCLOSE}    {DEBUG("flex: PLCOSE\n"); return PCLOSE;}
+{DOT}       {DEBUG("flex: DOT\n"); return DOT;}
+{DEF}       {DEBUG("flex: DEF\n"); return DEF;}
+{LOPEN}     {DEBUG("flex: LOPEN\n"); return LOPEN;}
+{LCLOSE}    {DEBUG("flex: LCLOSE\n"); return LCLOSE;}
+{COM}       {DEBUG("flex: COM\n"); return COM;}
+{PIPE}      {DEBUG("flex: PIPE\n"); return PIPE;}
+{PLUS}      {DEBUG("flex: PLUS\n"); return PLUS;}
+{MINUS}     {DEBUG("flex: MINUS\n"); return MINUS;}
+{MULT}      {DEBUG("flex: MULT\n"); return MULT;}
+{DIV}       {DEBUG("flex: DIV\n"); return DIV;}
+{SMALLER}   {DEBUG("flex: SMALLER.\n"); return SMALLER;}
+{LARGER}    {DEBUG("flex: LARGER\n"); return LARGER;}
+{LEQUAL}    {DEBUG("flex: LEQUAL\n"); return LEQUAL;}
+{SEQUAL}    {DEBUG("flex: SEQUAL\n"); return SEQUAL;}
+{EQUAL}     {DEBUG("flex: EQUAL\n"); return EQUAL;}
+{UNEQUAL}   {DEBUG("flex: UNEQUAL\n"); return UNEQUAL;}
+{INT}       {DEBUG("flex: INT\n"); return INT;}
+{FLOAT}     {DEBUG("flex: FLOAT\n"); return FLOAT;}
+{EOL}       {DEBUG("flex: EOL\n"); lines++;}

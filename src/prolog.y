@@ -18,9 +18,8 @@ void yyerror(const char *s) {
 %}
 
 %token IS
-%token CONST
-%token VAR
-%token AVAR
+%token <text>CONST
+%token <text>VAR
 
 %token POPEN
 %token PCLOSE

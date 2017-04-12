@@ -7,7 +7,7 @@ SRCGEN=build
 
 
 all: generate
-	$(CC) $(CCFLAGS) -o $(BINNAME) $(SRCGEN)/*.c -I $(CCLIBS)
+	$(CC) $(CCFLAGS) -o $(BINNAME) $(SRCGEN)/*.c $(CCLIBS)
 
 generate: $(SRCGEN)/prolog.tab.c $(SRCGEN)/lex.yy.c
 

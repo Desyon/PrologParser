@@ -43,7 +43,6 @@ SPACE       (\s+)
 {IS}        {printf("flex: IS\n"); return IS;}
 {CONST}     {printf("flex: CONST\n"); yylval.text = strdup(yytext); return CONST;}
 {VAR}       {printf("flex: VAR\n"); yylval.text = strdup(yytext); return VAR;}
-{AVAR}      {printf("flex: AVAR\n"); return AVAR;}
 {POPEN}     {printf("flex: POPEN\n"); return POPEN;}
 {PCLOSE}    {printf("flex: PLCOSE\n"); return PCLOSE;}
 {DOT}       {printf("flex: DOT\n"); return DOT;}

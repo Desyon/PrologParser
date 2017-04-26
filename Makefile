@@ -8,7 +8,7 @@ INC=include
 
 
 all: generate
-	$(CC) $(CCFLAGS) -o $(BINNAME) $(SRCGEN)/*.c -I $(INC)  $(CCLIBS)
+	$(CC) $(CCFLAGS) -o $(BINNAME) $(SRCGEN)/*.c $(SRC)/*.cpp -I $(INC)  $(CCLIBS)
 
 generate: $(SRCGEN)/prolog.tab.c $(SRCGEN)/lex.yy.c
 

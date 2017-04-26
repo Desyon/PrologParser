@@ -2,10 +2,9 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
-#include <vector>
-#include <map>
 
 #include "debug.h"
+#include "symbolTable.h"
 
 extern "C" int yylex();
 extern "C" int yyparse();
@@ -17,16 +16,7 @@ void yyerror(const char *s) {
     fprintf (stderr, "Parser error in line %d:\n%s\n", lines, s);
 }
 
-int idCount = 1;
-
-struct NamedId {
-  int id;
-  std::string name;
-};
-
-typedef NamedId liter_t, param_t;
-
-std::vector<std::map<liter_t, std::vector<param_t>>> symbols;
+int literCount = -1;
 
 %}
 
@@ -75,7 +65,7 @@ line:   fact DOT {DEBUG("\tbison: line:\tfact DOT");}
         | line rule DOT {DEBUG("\tbison: line:\trule DOT");}
         ;
 
-rule:   fact DEF ruleargs {DEBUG("\tbison: rule:\tfact DEF ruleargs\n");}
+rule:   pred DEF ruleargs {DEBUG("\tbison: rule:\tfact DEF ruleargs\n");}
         ;
 
 fact:   pred {DEBUG("\tbison: fact:\tpred\n");}
@@ -84,12 +74,14 @@ fact:   pred {DEBUG("\tbison: fact:\tpred\n");}
 pred:   CONST POPEN args PCLOSE {DEBUG("\tbison: pred:\tCONST POPEN args PCLOSE\n");
           std::string symbol($1);
           free($1);
-          std::cerr << "CONST: " << symbol << std::endl;
+          DEBUG("CONST: " << symbol << std::endl);
+          NamedId* litName = new NamedId;
+          litName->id = ++literCount;
           }
         | CONST {DEBUG("\tbison: pred:\tCONST\n");
           std::string symbol($1);
           free($1);
-          std::cerr << "CONST: " << symbol << std::endl;
+          DEBUG("CONST: " << symbol << std::endl);
         }
         ;
 
@@ -100,7 +92,7 @@ args:   arg {DEBUG("\tbison: args:\targ\n");}
 arg:    CONST {DEBUG("\tbison: arg:\tCONST\n");
           std::string symbol($1);
           free($1);
-          std::cerr << "CONST: " << symbol << std::endl;
+          DEBUG("CONST: " << symbol << std::endl);
         }
         | list {DEBUG("\tbison: arg:\tfact\n");}
         | mathexpr {DEBUG("\tbison: arg:\tmathexpr\n");}
@@ -110,7 +102,7 @@ ruleargs:   rulearg {DEBUG("\tbsion: ruleargs:\trulearg\n");}
             | rulearg COM ruleargs {DEBUG("\tbsion: ruleargs:\trulearg COM ruleargs\n");}
             ;
 
-rulearg:    fact {DEBUG("\tbsion: rulearg:\tfact\n");}
+rulearg:    pred {DEBUG("\tbsion: rulearg:\tfact\n");}
             | compexpr {DEBUG("\tbsion: rulearg:\tcompexpr\n");}
             | isexpr {DEBUG("\tbsion: rulearg:\tisexpr\n");}
             ;
@@ -127,7 +119,7 @@ lelements:  lelement {DEBUG("\tbison: lelements:\tlelement\n");}
 lelement:   CONST {DEBUG("\tbison: lelement:\tCONST\n");
               std::string symbol($1);
               free($1);
-              std::cerr << "CONST: " << symbol << std::endl;
+              DEBUG("CONST: " << symbol << std::endl);
             }
             | mathexpr {DEBUG("\tbison: lelement:\tmathexpr\n");}
             | list {DEBUG("\tbison: lelement:\tlist\n");}
@@ -141,7 +133,7 @@ mathexpr:   num {DEBUG("\tbison: mathexpr:\tnum\n");}
             | VAR {DEBUG("\tbison: mathexpr:\tVAR\n");
               std::string symbol($1);
               free($1);
-              std::cerr << "VAR: " << symbol << std::endl;
+              DEBUG("VAR: " << symbol << std::endl);
             }
             | POPEN mathexpr PCLOSE {DEBUG("\tbison: mathexpr:\tPOPEN mathexpr PCLOSE\n");}
             | MINUS mathexpr %prec UMINUS {DEBUG("\tbison: mathexpr:\tMINUS mathexpr\n");}
@@ -171,7 +163,7 @@ compoperator: EQUAL {DEBUG("\tbison: compoperator:\tEQUAL\n");}
 isexpr:   VAR IS mathexpr {DEBUG("\tbison: isexpr:\tVAR IS mathexpr\n");
             std::string symbol($1);
             free($1);
-            std::cerr << "VAR: " << symbol << std::endl;
+            DEBUG("VAR: " << symbol << std::endl);
           }
           ;
 
@@ -179,4 +171,5 @@ isexpr:   VAR IS mathexpr {DEBUG("\tbison: isexpr:\tVAR IS mathexpr\n");
 
 int main(int, char**) {
     yyparse();
+    printSymbolTable();
 }

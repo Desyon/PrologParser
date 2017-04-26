@@ -17,14 +17,16 @@ void yyerror(const char *s) {
     fprintf (stderr, "Parser error in line %d:\n%s\n", lines, s);
 }
 
+int idCount = 1;
+
 struct NamedId {
   int id;
   std::string name;
 };
 
-typedef NamedId lit_t, param_t;
+typedef NamedId liter_t, param_t;
 
-std::vector<std::map<lit_t, std::vector<param_t>>> symbols;
+std::vector<std::map<liter_t, std::vector<param_t>>> symbols;
 
 %}
 
@@ -76,12 +78,15 @@ line:   fact DOT {DEBUG("\tbison: line:\tfact DOT");}
 rule:   fact DEF ruleargs {DEBUG("\tbison: rule:\tfact DEF ruleargs\n");}
         ;
 
-fact:   CONST POPEN args PCLOSE {DEBUG("\tbison: fact:\tCONST POPEN args PCLOSE\n");
+fact:   pred {DEBUG("\tbison: fact:\tpred\n");}
+        ;
+
+pred:   CONST POPEN args PCLOSE {DEBUG("\tbison: pred:\tCONST POPEN args PCLOSE\n");
           std::string symbol($1);
           free($1);
           std::cerr << "CONST: " << symbol << std::endl;
           }
-        | CONST {DEBUG("\tbison: fact:\tCONST\n");
+        | CONST {DEBUG("\tbison: pred:\tCONST\n");
           std::string symbol($1);
           free($1);
           std::cerr << "CONST: " << symbol << std::endl;

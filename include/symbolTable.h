@@ -2,24 +2,35 @@
 #define SYMBOLTABLE_H
 
 #include <vector>
+#include <set>
+#include <map>
 #include <iostream>
 #include <cstddef>
 
-struct NamedId {
-  int id;
+struct NameId {
+  int uId;
   std::string name;
 };
 
-typedef NamedId liter_t, param_t;
-
-struct literal {
-  NamedId id;
-  std::vector<param_t> params;
+struct IdComp {
+  bool operator() (const NameId& left, const NameId& right) const {
+    return left.uId < right.uId;
+  }
 };
 
+typedef NameId liter_t, param_t;
+
+typedef std::map<
+          liter_t,
+          std::set<
+            param_t,
+            IdComp
+          >
+        > expr;
+
 /**FUNCTION PROTOTYPES*/
-void insertLiteral(literal l);
-void insertParam(int id, param_t p);
+void insertLiteral();
+void insertParam();
 
 void printSymbolTable();
 

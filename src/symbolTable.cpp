@@ -1,26 +1,33 @@
+#include <string>
+
 #include "symbolTable.h"
 
 /**GLOBAL VARIABLES*/
 
-std::vector<literal> symbol_table;
+std::vector<expr> symbol_table;
 
 int paramCount = 0;
 
-void insertLiteral(literal l) {
-  symbol_table.insert(symbol_table.end(), l);
+//TODO: Rework insert funtions
+void insertLiteral() {
+  //symbol_table.back.insert(symbol_table.end(), l);
 }
 
-void insertParam(int id, param_t p) {
-  symbol_table[id].params.insert(symbol_table[id].params.end(), p);
+void insertParam() {
+  //symbol_table.back[id].second.insert(p);
 }
 
 void printSymbolTable() {
-std::cout << "|-----SYMBOL TABLE-----|" << "\n\n";
+  std::cout << "|-----SYMBOL TABLE-----|" << "\n\n";
 
-  for(std::vector<literal>::size_type i = 0; i < symbol_table.size(); i++) {
-    std::cout << "LITER: " << symbol_table[i].id.name << std::endl;
-    for(std::vector<param_t>::size_type n = 0; n < symbol_table[i].params.size(); n++) {
-      std::cout << "\tPARAM: " << symbol_table[i].params[n].name << std::endl;
+  int exprCount = 1;
+  for(auto &expression : symbol_table) {
+    std::cout << "EXPR" << exprCount << ":" << std::endl;
+    for(auto &liter : expression) {
+      std::cout << "LITER:\t" << liter.first.name << std::endl;
+      for(auto &param : liter.second) {
+        std::cout << "\tPARAM:\t" << param.name << std::endl;
+      }
     }
   }
 }

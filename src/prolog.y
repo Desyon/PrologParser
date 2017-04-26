@@ -75,8 +75,8 @@ pred:   CONST POPEN args PCLOSE {DEBUG("\tbison: pred:\tCONST POPEN args PCLOSE\
           std::string symbol($1);
           free($1);
           DEBUG("CONST: " << symbol << std::endl);
-          NamedId* litName = new NamedId;
-          litName->id = ++literCount;
+          //NamedId* litName = new NamedId;
+          //litName->id = ++literCount;
           }
         | CONST {DEBUG("\tbison: pred:\tCONST\n");
           std::string symbol($1);

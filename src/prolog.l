@@ -1,8 +1,9 @@
 %{
-#include "prolog.tab.h"
-#include "debug.h"
-
 #include <string.h>
+
+#include "debug.h"
+#include "SymbolTable.h"
+#include "prolog.tab.h"
 
 #define YY_DECL extern "C" int yylex()
 int lines = 1;

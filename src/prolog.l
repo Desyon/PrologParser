@@ -1,64 +1,68 @@
 %{
 #include "prolog.tab.h"
+
+#define YY_DECL extern "C" int yylex()
+int lines = 1;
 %}
 
-IMPLIES (:-)
+DEF     (:-)
 DOT     (\.)
-COMMA   (\,)
-OPEN_PARA (\()
-CLOSE_PARA (\))
-OPEN_BRA (\[)
-CLOSE_BRA (])
+COMMA   (,)
+POPEN   (\()
+PCLOSE  (\))
+LOPEN   (\[)
+LCLOSE  (])
 
-PIPE (\|)
-PLUS (\+)
-MINUS (-)
-ASTERIX (\*)
-SLASH (\/)
-COLON (:)
+PIPE      (\|)
+PLUS      (\+)
+MINUS     (-)
+ASTERISK  (\*)
+DIV       (\/)
+COLON     (:)
 
 SMALLER (\<)
-SMALLER_EQUALS (\<=)
+SEQUAL  (\<=)
 GREATER (\>)
-GREATER_EQUALS (\>=)
-EQUALS (==?)
-UNEQUALS (=\\=)
+GEQUAL  (\>=)
+EQUAL   (==?)
+UNEQUAL (=\\=)
 
 NOT (not)
-IS (is)
+IS  (is)
 
-NUMBER ([0-9]+)
-CONST_ID ([a-z][a-zA-Z]*)
-VAR_ID ([A-Z][A-Za-z]*)
+NUMBER ([0-9]+|[0-9]+\.[0-9]+)
+CONST ([a-z][a-zA-Z0-9]*)
+VAR ([A-Z][A-Za-z0-9]*)
 
-NEW_LINE_FEED (\n|\n\r)
+NEWLINE (\n)
+SPACE (\s+)
 
 %%
-IMPLIES {return IMPLIES;}
-DOT {return DOT;}
-COMMA {return COMMA;}
-OPEN_PARA {return OPEN_PARA;}
-CLOSE_PARA {return CLOSE_PARA;}
-OPEN_BRA {return OPEN_BRA;}
-CLOSE_BRA {return CLOSE_BRA;}
-PIPE {return PIPE;}
-PLUS {return PLUS;}
-MINUS {return MINUS;}
-ASTERIX {return ASTERIX;}
-SLASH {return SLASH;}
-COLON {return COLON;}
-SMALLER {return SMALLER;}
-SMALLER_EQUALS {return SMALLER_EQUALS;}
-GREATER {return GREATER;}
-GREATER_EQUALS {return GREATER_EQUALS;}
-EQUALS {return EQUALS;}
-NOT {return NOT;}
-IS {return IS;}
-UNEQUALS {return UNEQUALS;}
-NUMBER {sscanf(yytext, "%d", &yylval.num); return NUMBER;}
-CONST_ID {yylval.str = strdup(yytext); return CONST_ID;}
-VAR_ID {yylval.str = strdup(yytext); return VAR_ID;}
-NEW_LINE_FEED {return NEW_LINE_FEED;}
+{DEF} {return DEF;}
+{DOT} {return DOT;}
+{COMMA} {return COMMA;}
+{POPEN} {return POPEN;}
+{PCLOSE} {return PCLOSE;}
+{LOPEN} {return LOPEN;}
+{LCLOSE} {return LCLOSE;}
+{PIPE} {return PIPE;}
+{PLUS} {return PLUS;}
+{MINUS} {return MINUS;}
+{ASTERISK} {return ASTERISK;}
+{DIV} {return DIV;}
+{COLON} {return COLON;}
+{SMALLER} {return SMALLER;}
+{SEQUAL} {return SEQUAL;}
+{GREATER} {return GREATER;}
+{GEQUAL} {return GEQUAL;}
+{EQUAL} {return EQUAL;}
+{NOT} {return NOT;}
+{IS} {return IS;}
+{UNEQUAL} {return UNEQUAL;}
+{NUMBER} {sscanf(yytext, "%d", &yylval.num); return NUMBER;}
+{CONST} {yylval.str = strdup(yytext); return CONST;}
+{VAR} {yylval.str = strdup(yytext); return VAR;}
+{NEWLINE} {lines++; return NEWLINE;}
 
 %%
 int yywrap (void) { return 1;}

@@ -82,78 +82,94 @@
 		char *str;
 		int num;
 	}
-	%start S
-	%token IMPLIES DOT
-	%token PLUS MINUS EQUALS NOT IS
-	%token UNEQUALS SMALLER SMALLER_EQUALS GREATER GREATER_EQUALS
-	%token COMMA OPEN_PARA CLOSE_PARA OPEN_BRA CLOSE_BRA PIPE ASTERIX COLON SLASH
-	%token NEW_LINE_FEED
+	%start clause
+	%token DEF DOT
+	%token PLUS MINUS EQUAL NOT IS
+	%token UNEQUAL SMALLER SEQUAL GREATER GEQUAL
+	%token COMMA POPEN PCLOSE LOPEN LCLOSE PIPE ASTERISK COLON DIV
 	%token <num> NUMBER
-	%token <str> CONST_ID VAR_ID
+	%token <str> CONST VAR
 
-	%left PLUS MINUS ASTERIX SLASH
-	%left UNEQUALS SMALLER SMALLER_EQUALS GREATER GREATER_EQUALS
+	%left PLUS MINUS ASTERISK DIV
+	%left UNEQUAL SMALLER SEQUAL GREATER GEQUAL
 	%%
 
-	S: S E
-	| E
-	| S NEW_LINE_FEED
-	| NEW_LINE_FEED;
+	clause: clause expression
+					| expression
+					;
 
-	E: RULE
-	| FACT;
+	expression: rule DOT
+							| fact DOT
+							;
 
-	RULE: SR IMPLIES FACT_LIST DOT;
+	rule: fact DEF factList
+				;
 
-	FACT: SR DOT;
+	fact: CONST POPEN params PCLOSE {
+					gen_partial_problem_node('E',$1); var_head = 0;
+				}
+				;
 
-	SR: CONST_ID OPEN_PARA ARG_LIST CLOSE_PARA {gen_partial_problem_node('E',$1); var_head = 0;};
+	subRule: CONST POPEN params PCLOSE {
+						gen_partial_problem_node('U', $1); var_head = 0;
+					}
+					| arithmeticExpr {
+							gen_partial_problem_node('U',""); var_head = 0;
+						}
+					;
 
-	AR: CONST_ID OPEN_PARA ARG_LIST CLOSE_PARA {gen_partial_problem_node('U', $1); var_head = 0;}
-	| ARITHMETIC_EXP {gen_partial_problem_node('U',""); var_head = 0;};
+	arithmeticExpr: VAR operator arithmeticRhs;
 
-	ARITHMETIC_EXP: VAR_ID OPERATOR ARITHMETIC_REST;
+	operator: PLUS
+						| MINUS
+						| EQUAL
+						| SEQUAL
+						| SMALLER
+						| GEQUAL
+						| GREATER
+						| UNEQUAL
+						| ASTERISK
+						| DIV
+						| IS
+						;
 
-	OPERATOR: PLUS
-	| MINUS
-	| EQUALS
-	| SMALLER_EQUALS
-	| SMALLER
-	| GREATER_EQUALS
-	| GREATER
-	| UNEQUALS
-	| ASTERIX
-	| SLASH
-	| IS;
+	arithmeticRhs: 	VAR
+									| NUMBER
+									| CONST
+									| arithmeticExpr
+									;
 
-	ARITHMETIC_REST: VAR_ID
-	| NUMBER
-	| CONST_ID
-	| ARITHMETIC_EXP;
+	params: param COMMA params
+					| param
+					;
 
-	ARG_LIST: ARG COMMA ARG_LIST
-	| ARG;
+	factList:	 subRule COMMA factList
+						| subRule
+						;
 
-	FACT_LIST: AR COMMA FACT_LIST
-	|AR;
+	list: LOPEN lelements LCLOSE
+				| LOPEN lelements PIPE lelements LCLOSE
+				| LOPEN LCLOSE
+				;
 
-	LIST: OPEN_BRA HEAD_CONTENT REST_LIST
-	| OPEN_BRA CLOSE_BRA;
+	lelements:	lelement
+							| lelement COMMA lelements
+							;
 
-	REST_LIST: PIPE ARG CLOSE_BRA
-	| COMMA ARG REST_LIST
-	| CLOSE_BRA;
+	lelement: VAR {
+							gen_var_node($1);
+						}
+						| NUMBER
+						| list
+						;
 
-	HEAD_CONTENT: VAR_ID {gen_var_node($1);}
-	|NUMBER
-	|CONST_ID;
-
-	ARG: CONST_ID
-	|NUMBER
-	|LIST
-	|VAR_ID{gen_var_node($1);};
-
-
+	param:	CONST
+					| NUMBER
+					| list
+					| VAR {
+							gen_var_node($1);
+						}
+					;
 	%%
 	void gen_var_node(char *var_name){
 		struct variable *ptr = malloc(sizeof(struct variable));
@@ -572,7 +588,7 @@
 					add_output(c_node,1,0,e_node->out->target);
 					e_node->out->target = c_node;
 					while(current_pp != 0) {
-						printf("In Loop");
+						printf("INFO:\tIn Loop\n");
 						if(current_pp->node->type == 'U') {
 						add_output(c_node,1,0,current_pp->node);
 						struct partial_problem *left_problem = current_pp->prev;
@@ -623,22 +639,19 @@
 	}
 
 	int main(int argc, char **argv) {
-		extern FILE *yyin;
+		printf("INFO:\tProgram started.\n");
 
 		var_head = 0;
 		var_tail = 0;
 		pp_head = 0;
 		pp_tail = 0;
 
-		yyin = fopen("input_file.txt","r");
-
 		yyparse();
-		fclose(yyin);
-		printf("Starting Schwinn...\n");
+		printf("INFO:\tStarting Schwinn...\n");
 		schwinn(pp_head);
-		printf("Printing Node-Table...\n");
+		printf("INFO:\tPrinting Node-Table...\n");
 		print_table();
-		printf("Success. Terminating...\n");
+		printf("INFO:\tSuccess. Terminating...\n");
 		return 0;
 	}
 	struct node *connect_and_number_nodes(struct partial_problem *pp) {
@@ -668,8 +681,6 @@
 		FILE *table_out;
 		table_out = fopen("output_table.txt","a+");
 
-		printf("\nCongrats. You seem to have a clue about Horn clauses.\n");
-
 		while(current != 0) {
 			print_table_entry(current,table_out);
 			current = current->next;
@@ -697,5 +708,5 @@
 	}
 
 	void yyerror (char *message){
-		printf("\nThis is not a Horn clause. Please start the program again\n");
+		printf("\nParser Error in line %d:\n%s\n", lines, message);
 	}

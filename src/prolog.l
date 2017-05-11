@@ -38,31 +38,31 @@ NEWLINE (\n)
 SPACE (\s+)
 
 %%
-{DEF} {return DEF;}
-{DOT} {return DOT;}
-{COMMA} {return COMMA;}
-{POPEN} {return POPEN;}
-{PCLOSE} {return PCLOSE;}
-{LOPEN} {return LOPEN;}
-{LCLOSE} {return LCLOSE;}
-{PIPE} {return PIPE;}
-{PLUS} {return PLUS;}
-{MINUS} {return MINUS;}
-{ASTERISK} {return ASTERISK;}
-{DIV} {return DIV;}
-{COLON} {return COLON;}
-{SMALLER} {return SMALLER;}
-{SEQUAL} {return SEQUAL;}
-{GREATER} {return GREATER;}
-{GEQUAL} {return GEQUAL;}
-{EQUAL} {return EQUAL;}
-{NOT} {return NOT;}
-{IS} {return IS;}
-{UNEQUAL} {return UNEQUAL;}
-{NUMBER} {sscanf(yytext, "%d", &yylval.num); return NUMBER;}
-{CONST} {yylval.str = strdup(yytext); return CONST;}
-{VAR} {yylval.str = strdup(yytext); return VAR;}
-{NEWLINE} {lines++; return NEWLINE;}
+{DEF}       {return DEF;}
+{DOT}       {return DOT;}
+{COMMA}     {return COMMA;}
+{POPEN}     {return POPEN;}
+{PCLOSE}    {return PCLOSE;}
+{LOPEN}     {return LOPEN;}
+{LCLOSE}    {return LCLOSE;}
+{PIPE}      {return PIPE;}
+{PLUS}      {return PLUS;}
+{MINUS}     {return MINUS;}
+{ASTERISK}  {return ASTERISK;}
+{DIV}       {return DIV;}
+{COLON}     {return COLON;}
+{SMALLER}   {return SMALLER;}
+{SEQUAL}    {return SEQUAL;}
+{GREATER}   {return GREATER;}
+{GEQUAL}    {return GEQUAL;}
+{EQUAL}     {return EQUAL;}
+{NOT}       {return NOT;}
+{IS}        {return IS;}
+{UNEQUAL}   {return UNEQUAL;}
+{NUMBER}    {sscanf(yytext, "%d", &yylval.num); return NUMBER;}
+{CONST}     {yylval.str = strdup(yytext); return CONST;}
+{VAR}       {yylval.str = strdup(yytext); return VAR;}
+{NEWLINE}   {lines++;}
 
 %%
 int yywrap (void) { return 1;}

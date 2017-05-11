@@ -1,6 +1,13 @@
 %{
 	#include <stdio.h>
 	#include <string.h>
+
+	extern "C" int yylex();
+	extern "C" int yyparse();
+	extern "C" FILE *yyin;
+	extern "C" int lines;
+	extern "C" char *yytext;
+
 	#define CHUNK 1024 /*read 1024 bytes at a time */
 	#define ABSOLUTE_DEPENDENCY 1
 	#define G_INDEPENDENCY 2
@@ -9,7 +16,6 @@
 	#define ABSOLUTE_INDEPENDENCY 5
 
 	int problem_counter;
-	int line_counter = 1;
 
 	struct variable *var_head;
 	struct variable *var_tail;
@@ -20,12 +26,14 @@
 		char *name;
 		struct variable *next;
 	};
+
 	struct partial_problem {
 		struct variable *var;
 		struct node *node;
 		struct partial_problem *next;
 		struct partial_problem *prev;
 	};
+
 	struct node {
 		int index;
 		char type;
@@ -34,12 +42,14 @@
 		struct node *next;
 		struct node *prev;
 	};
+
 	struct output {
 		int port;
 		char type;
 		struct node *target;
 		struct output *next;
 	};
+
 	struct dependency {
 		int type;
 		struct variable *g_vars;
@@ -53,11 +63,11 @@
 
 	struct variable *gen_var_from_char(char *info);
 	struct node *gen_node(char type, struct output *output, struct variable *vars);
-	void insert_node_before(struct node *current, struct node *new);
-	void insert_node_after(struct node *current, struct node *new);
+	void insert_node_before(struct node *current, struct node *newNode);
+	void insert_node_after(struct node *current, struct node *newNode);
 
 	struct output *gen_output(int port, char type, struct node *target);
-	void insert_output(struct output *current, struct output *new);
+	void insert_output(struct output *current, struct output *newOutput);
 	void add_output(struct node *current, int port, char type, struct node *target);
 
 	struct node *gen_a_node(struct node *current);
@@ -68,7 +78,7 @@
 	struct node *gen_g_i_independency(struct node *left, struct node *right, struct variable *g_vars, struct variable *i_vars);
 	struct node *get_last_node(struct partial_problem *pp);
 
-	void add_variable(struct variable *current, char *new);
+	void add_variable(struct variable *current, char *newVar);
 	struct dependency *check_dependency(struct partial_problem *entry, struct partial_problem *current, struct partial_problem *check);
 
 	struct node *connect_and_number_nodes(struct partial_problem *pp);
@@ -172,7 +182,7 @@
 					;
 	%%
 	void gen_var_node(char *var_name){
-		struct variable *ptr = malloc(sizeof(struct variable));
+		struct variable *ptr = new variable;
 		ptr->name = var_name;
 		ptr->next = 0;
 		if (!var_head){
@@ -184,7 +194,7 @@
 		}
 	}
 	void gen_partial_problem_node(char type, char *info){
-		struct partial_problem *ptr = malloc(sizeof(struct partial_problem));
+		struct partial_problem *ptr = new partial_problem;
 		ptr->var = var_head;
 		ptr->next = 0;
 		ptr->prev = 0;
@@ -199,14 +209,14 @@
 		}
 	}
 	struct variable *gen_var_from_char(char *info) {
-		struct variable *var = malloc(sizeof(struct variable));
+		struct variable *var = new variable;
 		var->next = 0;
 		var->name = info;
 		return var;
 	}
 
 	struct node *gen_node(char type, struct output *output, struct variable *vars) {
-		struct node *tmp = malloc(sizeof(struct node));
+		struct node *tmp = new node;
 		tmp->type = type;
 		tmp->out = output;
 		tmp->vars = vars;
@@ -215,23 +225,23 @@
 
 		return tmp;
 	}
-	void insert_node_before(struct node *current, struct node *new) {
-		new->prev = current->prev;
-		current->prev->next = new;
-		new->next = current;
-		current->prev = new;
+	void insert_node_before(struct node *current, struct node *newNode) {
+		newNode->prev = current->prev;
+		current->prev->next = newNode;
+		newNode->next = current;
+		current->prev = newNode;
 	}
-	void insert_node_after(struct node *current, struct node *new) {
-		new->next = current->next;
+	void insert_node_after(struct node *current, struct node *newNode) {
+		newNode->next = current->next;
 		if(current->next != 0) {
-			current->next->prev = new;
+			current->next->prev = newNode;
 		}
-		new->prev = current;
-		current->next = new;
+		newNode->prev = current;
+		current->next = newNode;
 	}
 
 	struct output *gen_output(int port, char type, struct node *target) {
-		struct output *tmp = malloc(sizeof(struct output));
+		struct output *tmp = new output;
 		tmp->port = port;
 		tmp->type = type;
 		tmp->target = target;
@@ -239,9 +249,9 @@
 
 		return tmp;
 	}
-	void insert_output(struct output *current, struct output *new) {
-		new->next = current->next;
-		current->next = new;
+	void insert_output(struct output *current, struct output *newOutput) {
+		newOutput->next = current->next;
+		current->next = newOutput;
 	}
 	void add_output(struct node *current, int port, char type, struct node *target) {
 		if(current->out != 0) {
@@ -404,9 +414,9 @@
 		return last_node;
 	}
 
-	void add_variable(struct variable *current, char *new) {
-			struct variable * tmp = malloc(sizeof(struct variable));
-			tmp->name = new;
+	void add_variable(struct variable *current, char *newVar) {
+			struct variable * tmp = new variable;
+			tmp->name = newVar;
 			tmp->next = 0;
 			while(current->next != 0) {
 				current = current->next;
@@ -421,7 +431,7 @@
 		struct variable *check_equals = 0;
 		struct variable *check_different = 0;
 		struct variable *current_different = 0;
-		struct dependency *depend = malloc(sizeof(struct dependency));
+		struct dependency *depend = new dependency;
 		depend->type = 0;
 		depend->i_vars = 0;
 		depend->g_vars = 0;
@@ -432,7 +442,7 @@
 			while(check_var != 0) {
 				if(strcmp(current_var->name,check_var->name) == 0) {
 					if(check_equals == 0) {
-						check_equals = malloc(sizeof(struct variable));
+						check_equals = new variable;
 						check_equals->name = check_var->name;
 						check_equals->next = 0;
 					} else {
@@ -454,7 +464,7 @@
 				if(strcmp(entry_var->name,tmp_check_equals->name) == 0) {
 					found = 1;
 					if(depend->g_vars == 0) {
-						depend->g_vars = malloc(sizeof(struct variable));
+						depend->g_vars = new variable;
 						depend->g_vars->name = entry_var->name;
 						depend->type = G_INDEPENDENCY;
 						depend->g_vars->next = 0;
@@ -484,7 +494,7 @@
 			}
 			if(!found) {
 				if(current_different == 0) {
-					current_different = malloc(sizeof(struct variable));
+					current_different = new variable;
 					current_different->name = current_var->name;
 					current_different->next = 0;
 				} else {
@@ -500,7 +510,7 @@
 			while(entry_var != 0) {
 				if(strcmp(current_different->name,entry_var->name) == 0) {
 					if(depend->i_vars == 0) {
-						depend->i_vars = malloc(sizeof(struct variable));
+						depend->i_vars = new variable;
 						depend->i_vars->name = entry_var->name;
 						if(depend->type == G_INDEPENDENCY) {
 							depend->type = GI_INDEPENDENCY;
@@ -535,7 +545,7 @@
 				}
 				if(!found) {
 					if(check_different == 0) {
-						check_different = malloc(sizeof(struct variable));
+						check_different = new variable;
 						check_different->name = check_var->name;
 						check_different->next = 0;
 					} else {
@@ -551,7 +561,7 @@
 				while(entry_var != 0) {
 					if(strcmp(check_different->name,entry_var->name) == 0) {
 						if(depend->i_vars == 0) {
-							depend->i_vars = malloc(sizeof(struct variable));
+							depend->i_vars = new variable;
 							depend->i_vars->name = entry_var->name;
 							if(depend->type == G_INDEPENDENCY) {
 								depend->type = GI_INDEPENDENCY;
@@ -676,18 +686,7 @@
 
 		return head;
 	}
-	void print_table() {
-		struct node *current = connect_and_number_nodes(pp_head);
-		FILE *table_out;
-		table_out = fopen("output_table.txt","a+");
 
-		while(current != 0) {
-			print_table_entry(current,table_out);
-			current = current->next;
-		}
-
-		fclose(table_out);
-	}
 	int print_table_entry(struct node *node,FILE *output_stream){
 		fprintf(output_stream,"%-5d%-3c",node->index,node->type);
 		struct output *out = node->out;
@@ -705,6 +704,19 @@
 			vars = vars->next;
 		}
 		fprintf(output_stream,"\n");
+	}
+
+	void print_table() {
+		struct node *current = connect_and_number_nodes(pp_head);
+		FILE *table_out;
+		table_out = fopen("output.md","w");
+
+		while(current != 0) {
+			print_table_entry(current,table_out);
+			current = current->next;
+		}
+
+		fclose(table_out);
 	}
 
 	void yyerror (char *message){

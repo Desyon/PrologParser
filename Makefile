@@ -1,14 +1,13 @@
-CC=g++
-CCFLAGS=-Wall -Wextra -fno-exceptions -Wno-format -std=c++1y
+CC=gcc
+CCFLAGS=-Wall -Wextra -fno-exceptions -Wno-format
 CCLIBS=-lfl
 BINNAME=prolog
 SRC=src
 SRCGEN=build
-INC=include
 
 
 all: generate
-	$(CC) $(CCFLAGS) -o $(BINNAME) $(SRCGEN)/*.c $(SRC)/*.cpp -I $(INC) $(CCLIBS)
+	$(CC) $(CCFLAGS) -o $(BINNAME) $(SRCGEN)/*.c $(CCLIBS)
 
 generate: $(SRCGEN)/prolog.tab.c $(SRCGEN)/lex.yy.c
 

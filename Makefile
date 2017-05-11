@@ -1,29 +1,23 @@
 CC=g++
-CCFLAGS=-Wall -Wextra -fno-exceptions -Wno-format -std=c++1y
 CCLIBS=-lfl
-BINNAME=prolog
+BINARY=prolog.exe
 SRC=src
-SRCGEN=build
-INC=include
-
+GENSRC=build
 
 all: generate
-	$(CC) $(CCFLAGS) -o $(BINNAME) $(SRCGEN)/*.c $(SRC)/*.cpp -I $(INC) $(CCLIBS)
+	$(CC) $(GENSRC)/*.c $(CCLIBS) -lm -g -o $(BINARY) > /dev/null 2>&1
 
-generate: $(SRCGEN)/prolog.tab.c $(SRCGEN)/lex.yy.c
+generate:
+	flex -o $(GENSRC)/lex.yy.c $(SRC)/prolog.l
+	bison -dy $(SRC)/prolog.y -o $(GENSRC)/prolog.tab.c
 
-$(SRCGEN)/prolog.tab.c: .FORCE
-	bison -v -d -o $(SRCGEN)/prolog.tab.c $(SRC)/prolog.y
-
-$(SRCGEN)/lex.yy.c: .FORCE
-		flex -o $(SRCGEN)/lex.yy.c $(SRC)/prolog.l
+test: all
+	./prolog.exe < test/one.pl
 
 clean:
-	rm -f $(BINNAME) $(SRCGEN)/*
+	rm -rf $(GENSRC)/*
 
 dirs:
-	mkdir $(SRCGEN)
-
-
-.PHONY: all clean generate dirs .FORCE
-FORCE:
+	mkdir build
+	mkdir include
+	mkdir src

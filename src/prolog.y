@@ -1,4 +1,7 @@
 %{
+  #include <iostream>
+  #include <fstream>
+  #include <string>
 	#include <stdio.h>
 	#include <string.h>
 
@@ -17,7 +20,7 @@
 
 	int problem_counter;
 
-	struct variable *var_head;
+  struct variable *var_head;
 	struct variable *var_tail;
 	struct partial_problem *pp_head;
 	struct partial_problem *pp_tail;
@@ -26,14 +29,12 @@
 		char *name;
 		struct variable *next;
 	};
-
 	struct partial_problem {
 		struct variable *var;
 		struct node *node;
 		struct partial_problem *next;
 		struct partial_problem *prev;
 	};
-
 	struct node {
 		int index;
 		char type;
@@ -42,14 +43,12 @@
 		struct node *next;
 		struct node *prev;
 	};
-
 	struct output {
 		int port;
 		char type;
 		struct node *target;
 		struct output *next;
 	};
-
 	struct dependency {
 		int type;
 		struct variable *g_vars;
@@ -58,35 +57,36 @@
 
 	void yyerror(char *message);
 
-	void gen_var_node(char *var_name);
-	void gen_partial_problem_node(char type, char *info);
+	void genVarNode(char *var_name);
+	void gebPartialProblemNode(char type, char *info);
 
-	struct variable *gen_var_from_char(char *info);
-	struct node *gen_node(char type, struct output *output, struct variable *vars);
-	void insert_node_before(struct node *current, struct node *newNode);
-	void insert_node_after(struct node *current, struct node *newNode);
+	struct variable *genVarFromChar(char *info);
+	struct node *GenNode(char type, struct output *output, struct variable *vars);
+	void appendNode(struct node *current, struct node *newNode);
 
-	struct output *gen_output(int port, char type, struct node *target);
-	void insert_output(struct output *current, struct output *newOutput);
-	void add_output(struct node *current, int port, char type, struct node *target);
+	struct output *genOutput(int port, char type, struct node *target);
+	void insertOutput(struct output *current, struct output *newOutput);
+	void addOutput(struct node *current, int port, char type, struct node *target);
 
-	struct node *gen_a_node(struct node *current);
-	struct node *connect_with_entry(struct node *left, struct node *right);
-	struct node *gen_absolute_dependency(struct node *left, struct node *right);
-	struct node *gen_g_independency(struct node *left, struct node *right, struct variable *vars);
-	struct node *gen_i_independency(struct node *left, struct node *right, struct variable *vars);
-	struct node *gen_g_i_independency(struct node *left, struct node *right, struct variable *g_vars, struct variable *i_vars);
-	struct node *get_last_node(struct partial_problem *pp);
+	struct node *genANode(struct node *current);
+	struct node *connectWithEntry(struct node *left, struct node *right);
+	struct node *genAbsoluteDependency(struct node *left, struct node *right);
+	struct node *genGDependency(struct node *left, struct node *right, struct variable *vars);
+	struct node *genIDependency(struct node *left, struct node *right, struct variable *vars);
+	struct node *genGIDependency(struct node *left, struct node *right, struct variable *g_vars, struct variable *i_vars);
+	struct node *getLastNode(struct partial_problem *pp);
 
-	void add_variable(struct variable *current, char *newVar);
-	struct dependency *check_dependency(struct partial_problem *entry, struct partial_problem *current, struct partial_problem *check);
+	void addVariable(struct variable *current, char *newVar);
+	struct dependency *checkDependency(struct partial_problem *entry, struct partial_problem *current, struct partial_problem *check);
 
-	struct node *connect_and_number_nodes(struct partial_problem *pp);
-	void print_table();
-	int print_table_entries(struct node *node,FILE *output_stream);
+	struct node *connectAndNumberNodes(struct partial_problem *pp);
+	void printTable();
+	int printTableEntries(struct node *node,FILE *output_stream);
 
-	void schwinn(struct partial_problem *current_pp);
+	void schwinnAlgorithm(struct partial_problem *current_pp);
 	int table_counter = 1;
+
+  using namespace std;
 	%}
 	%union{
 		char *str;
@@ -116,15 +116,15 @@
 				;
 
 	fact: CONST POPEN params PCLOSE {
-					gen_partial_problem_node('E',$1); var_head = 0;
+					gebPartialProblemNode('E',$1); var_head = 0;
 				}
 				;
 
 	subRule: CONST POPEN params PCLOSE {
-						gen_partial_problem_node('U', $1); var_head = 0;
+						gebPartialProblemNode('U', $1); var_head = 0;
 					}
 					| arithmeticExpr {
-							gen_partial_problem_node('U',""); var_head = 0;
+							gebPartialProblemNode('U',""); var_head = 0;
 						}
 					;
 
@@ -167,7 +167,7 @@
 							;
 
 	lelement: VAR {
-							gen_var_node($1);
+							genVarNode($1);
 						}
 						| NUMBER
 						| list
@@ -177,11 +177,11 @@
 					| NUMBER
 					| list
 					| VAR {
-							gen_var_node($1);
+							genVarNode($1);
 						}
 					;
 	%%
-	void gen_var_node(char *var_name){
+	void genVarNode(char *var_name){
 		struct variable *ptr = new variable;
 		ptr->name = var_name;
 		ptr->next = 0;
@@ -193,12 +193,12 @@
 			var_tail = ptr;
 		}
 	}
-	void gen_partial_problem_node(char type, char *info){
+	void gebPartialProblemNode(char type, char *info){
 		struct partial_problem *ptr = new partial_problem;
 		ptr->var = var_head;
 		ptr->next = 0;
 		ptr->prev = 0;
-		ptr->node = gen_node(type,0,var_head);
+		ptr->node = GenNode(type,0,var_head);
 		if (!pp_head){
 			pp_head = ptr;
 			pp_tail = ptr;
@@ -208,14 +208,14 @@
 			pp_tail = ptr;
 		}
 	}
-	struct variable *gen_var_from_char(char *info) {
+	struct variable *genVarFromChar(char *info) {
 		struct variable *var = new variable;
 		var->next = 0;
 		var->name = info;
 		return var;
 	}
 
-	struct node *gen_node(char type, struct output *output, struct variable *vars) {
+	struct node *GenNode(char type, struct output *output, struct variable *vars) {
 		struct node *tmp = new node;
 		tmp->type = type;
 		tmp->out = output;
@@ -225,13 +225,8 @@
 
 		return tmp;
 	}
-	void insert_node_before(struct node *current, struct node *newNode) {
-		newNode->prev = current->prev;
-		current->prev->next = newNode;
-		newNode->next = current;
-		current->prev = newNode;
-	}
-	void insert_node_after(struct node *current, struct node *newNode) {
+
+	void appendNode(struct node *current, struct node *newNode) {
 		newNode->next = current->next;
 		if(current->next != 0) {
 			current->next->prev = newNode;
@@ -240,7 +235,7 @@
 		current->next = newNode;
 	}
 
-	struct output *gen_output(int port, char type, struct node *target) {
+	struct output *genOutput(int port, char type, struct node *target) {
 		struct output *tmp = new output;
 		tmp->port = port;
 		tmp->type = type;
@@ -249,83 +244,83 @@
 
 		return tmp;
 	}
-	void insert_output(struct output *current, struct output *newOutput) {
+	void insertOutput(struct output *current, struct output *newOutput) {
 		newOutput->next = current->next;
 		current->next = newOutput;
 	}
-	void add_output(struct node *current, int port, char type, struct node *target) {
+	void addOutput(struct node *current, int port, char type, struct node *target) {
 		if(current->out != 0) {
 			struct output *last = current->out;
 			while(last->next != 0) {
 				last = last->next;
 			}
-			insert_output(last,gen_output(port,type,target));
+			insertOutput(last,genOutput(port,type,target));
 		} else {
-			current->out = gen_output(port,type,target);
+			current->out = genOutput(port,type,target);
 		}
 	}
 
-	struct node *gen_a_node(struct node *current) {
+	struct node *genANode(struct node *current) {
 		if(current->type == 'T') {
 			current->type = 'A';
 			return current;
 		} else {
-			struct node *a_node = gen_node('A',0,0);
-			insert_node_after(current,a_node);
-			add_output(current,1,0,a_node);
+			struct node *a_node = GenNode('A',0,0);
+			appendNode(current,a_node);
+			addOutput(current,1,0,a_node);
 			return a_node;
 		}
 	}
 	struct node *gen_tmp_node(struct node *current) {
-		struct node *tmp_node = gen_node('T',0,0);
-		insert_node_after(current,tmp_node);
-		add_output(current,1,0,tmp_node);
+		struct node *tmp_node = GenNode('T',0,0);
+		appendNode(current,tmp_node);
+		addOutput(current,1,0,tmp_node);
 
 		return tmp_node;
 	}
-	struct node *connect_with_entry(struct node *left, struct node *right) {
-		struct node *u_node = gen_node('U',0,0);
+	struct node *connectWithEntry(struct node *left, struct node *right) {
+		struct node *u_node = GenNode('U',0,0);
 		if(right->type == 'T') {
-			gen_a_node(right);
+			genANode(right);
 		}
-		insert_node_after(left,u_node);
+		appendNode(left,u_node);
 		if(left->type == 'E') {
-			add_output(left,2,'L',u_node);
+			addOutput(left,2,'L',u_node);
 		} else {
-			add_output(left,2,0,u_node);
+			addOutput(left,2,0,u_node);
 		}
-		add_output(right,1,0,u_node);
+		addOutput(right,1,0,u_node);
 
 		return u_node;
 	}
-	struct node *gen_absolute_dependency(struct node *left, struct node *right) {
+	struct node *genAbsoluteDependency(struct node *left, struct node *right) {
 		if(left->type == 'A' && left->out != 0) {
-			struct node *c_node = gen_node('C',left->out,0);
-			left->out = gen_output(1,0,c_node);
-			insert_node_after(left,c_node);
+			struct node *c_node = GenNode('C',left->out,0);
+			left->out = genOutput(1,0,c_node);
+			appendNode(left,c_node);
 			left = c_node;
 		}
 
 		struct node *u_node;
 		if(right->type == 'T') {
 			right->type = 'U';
-			add_output(left,1,0,right);
+			addOutput(left,1,0,right);
 			u_node = right;
 		} else {
-			u_node = gen_node('U',0,0);
-			insert_node_after(right,u_node);
-			add_output(left,1,0,u_node);
-			add_output(right,2,0,u_node);
+			u_node = GenNode('U',0,0);
+			appendNode(right,u_node);
+			addOutput(left,1,0,u_node);
+			addOutput(right,2,0,u_node);
 		}
 
 
 		return gen_tmp_node(u_node);
 	}
-	struct node *gen_g_independency(struct node *left, struct node *right, struct variable *vars) {
+	struct node *genGDependency(struct node *left, struct node *right, struct variable *vars) {
 		if(left->type == 'A' && left->out != 0) {
-			struct node *c_node = gen_node('C',left->out,0);
-			left->out = gen_output(1,0,c_node);
-			insert_node_after(left,c_node);
+			struct node *c_node = GenNode('C',left->out,0);
+			left->out = genOutput(1,0,c_node);
+			appendNode(left,c_node);
 			left = c_node;
 		}
 
@@ -335,24 +330,24 @@
 			right->vars = vars;
 			g_node = right;
 		} else {
-			g_node = gen_node('G',0,vars);
-			insert_node_after(right,g_node);
-			add_output(right,1,0,g_node);
+			g_node = GenNode('G',0,vars);
+			appendNode(right,g_node);
+			addOutput(right,1,0,g_node);
 		}
-		struct node *u_node = gen_node('U',0,0);
-		insert_node_after(g_node,u_node);
-		add_output(left,1,0,u_node);
-		add_output(g_node,2,'L',u_node);
+		struct node *u_node = GenNode('U',0,0);
+		appendNode(g_node,u_node);
+		addOutput(left,1,0,u_node);
+		addOutput(g_node,2,'L',u_node);
 
 		struct node *tmp_node = gen_tmp_node(u_node);
-		add_output(g_node,1,'R',u_node->out->target);
+		addOutput(g_node,1,'R',u_node->out->target);
 		return tmp_node;
 	}
-	struct node *gen_i_independency(struct node *left, struct node *right, struct variable *vars) {
+	struct node *genIDependency(struct node *left, struct node *right, struct variable *vars) {
 		if(left->type == 'A' && left->out != 0) {
-			struct node *c_node = gen_node('C',left->out,0);
-			left->out = gen_output(1,0,c_node);
-			insert_node_after(left,c_node);
+			struct node *c_node = GenNode('C',left->out,0);
+			left->out = genOutput(1,0,c_node);
+			appendNode(left,c_node);
 			left = c_node;
 		}
 
@@ -362,24 +357,24 @@
 			right->vars = vars;
 			i_node = right;
 		} else {
-			i_node = gen_node('I',0,vars);
-			insert_node_after(right,i_node);
-			add_output(right,1,0,i_node);
+			i_node = GenNode('I',0,vars);
+			appendNode(right,i_node);
+			addOutput(right,1,0,i_node);
 		}
-		struct node *u_node = gen_node('U',0,0);
-		insert_node_after(i_node,u_node);
-		add_output(left,1,0,u_node);
-		add_output(i_node,2,'L',u_node);
+		struct node *u_node = GenNode('U',0,0);
+		appendNode(i_node,u_node);
+		addOutput(left,1,0,u_node);
+		addOutput(i_node,2,'L',u_node);
 
 		struct node *tmp_node = gen_tmp_node(u_node);
-		add_output(i_node,1,'R',u_node->out->target);
+		addOutput(i_node,1,'R',u_node->out->target);
 		return tmp_node;
 	}
-	struct node *gen_g_i_independency(struct node *left, struct node *right, struct variable *g_vars, struct variable *i_vars) {
+	struct node *genGIDependency(struct node *left, struct node *right, struct variable *g_vars, struct variable *i_vars) {
 		if(left->type == 'A' && left->out != 0) {
-			struct node *c_node = gen_node('C',left->out,0);
-			left->out = gen_output(1,0,c_node);
-			insert_node_after(left,c_node);
+			struct node *c_node = GenNode('C',left->out,0);
+			left->out = genOutput(1,0,c_node);
+			appendNode(left,c_node);
 			left = c_node;
 		}
 
@@ -389,24 +384,24 @@
 			right->vars = g_vars;
 			g_node = right;
 		} else {
-			g_node = gen_node('G',0,g_vars);
-			insert_node_after(right,g_node);
-			add_output(right,1,0,g_node);
+			g_node = GenNode('G',0,g_vars);
+			appendNode(right,g_node);
+			addOutput(right,1,0,g_node);
 		}
-		struct node *u_node = gen_node('U',0,0);
-		struct node *i_node = gen_node('I',0,i_vars);
-		insert_node_after(g_node,i_node);
-		insert_node_after(i_node,u_node);
-		add_output(left,1,0,u_node);
-		add_output(g_node,2,'L',u_node);
-		add_output(g_node,1,'R',i_node);
-		add_output(i_node,2,'L',u_node);
+		struct node *u_node = GenNode('U',0,0);
+		struct node *i_node = GenNode('I',0,i_vars);
+		appendNode(g_node,i_node);
+		appendNode(i_node,u_node);
+		addOutput(left,1,0,u_node);
+		addOutput(g_node,2,'L',u_node);
+		addOutput(g_node,1,'R',i_node);
+		addOutput(i_node,2,'L',u_node);
 
 		struct node *tmp_node = gen_tmp_node(u_node);
-		add_output(i_node,1,'R',u_node->out->target);
+		addOutput(i_node,1,'R',u_node->out->target);
 		return tmp_node;
 	}
-	struct node *get_last_node(struct partial_problem *pp) {
+	struct node *getLastNode(struct partial_problem *pp) {
 		struct node *last_node = pp->node;
 		while(last_node->next != 0) {
 			last_node = last_node->next;
@@ -414,7 +409,7 @@
 		return last_node;
 	}
 
-	void add_variable(struct variable *current, char *newVar) {
+	void addVariable(struct variable *current, char *newVar) {
 			struct variable * tmp = new variable;
 			tmp->name = newVar;
 			tmp->next = 0;
@@ -423,7 +418,7 @@
 			}
 			current->next = tmp;
 	}
-	struct dependency *check_dependency(struct partial_problem *entry, struct partial_problem *current, struct partial_problem *check) {
+	struct dependency *checkDependency(struct partial_problem *entry, struct partial_problem *current, struct partial_problem *check) {
 		struct variable *entry_var = entry->var;
 		struct variable *current_var = current->var;
 		struct variable *check_var = check->var;
@@ -446,7 +441,7 @@
 						check_equals->name = check_var->name;
 						check_equals->next = 0;
 					} else {
-						add_variable(check_equals,check_var->name);
+						addVariable(check_equals,check_var->name);
 					}
 				}
 				check_var = check_var->next;
@@ -469,7 +464,7 @@
 						depend->type = G_INDEPENDENCY;
 						depend->g_vars->next = 0;
 					} else {
-						add_variable(depend->g_vars,entry_var->name);
+						addVariable(depend->g_vars,entry_var->name);
 					}
 				}
 				entry_var = entry_var->next;
@@ -498,7 +493,7 @@
 					current_different->name = current_var->name;
 					current_different->next = 0;
 				} else {
-					add_variable(current_different,current_var->name);
+					addVariable(current_different,current_var->name);
 				}
 			}
 			current_var = current_var->next;
@@ -519,7 +514,7 @@
 						}
 						depend->i_vars->next = 0;
 					} else {
-						add_variable(depend->i_vars,entry_var->name);
+						addVariable(depend->i_vars,entry_var->name);
 					}
 				}
 				entry_var = entry_var->next;
@@ -549,7 +544,7 @@
 						check_different->name = check_var->name;
 						check_different->next = 0;
 					} else {
-						add_variable(check_different,check_var->name);
+						addVariable(check_different,check_var->name);
 					}
 				}
 				check_var = check_var->next;
@@ -570,7 +565,7 @@
 							}
 							depend->i_vars->next = 0;
 						} else {
-							add_variable(depend->i_vars,entry_var->name);
+							addVariable(depend->i_vars,entry_var->name);
 						}
 					}
 					entry_var = entry_var->next;
@@ -581,50 +576,50 @@
 		return depend;
 	}
 
-	void schwinn(struct partial_problem *current_pp) {
+	void schwinnAlgorithm(struct partial_problem *current_pp) {
 		struct partial_problem *e_problem = current_pp;
 		struct node *e_node = e_problem->node;
 		current_pp = current_pp->next;
 		//part 2.1.1
 		if(current_pp != 0) {
-			add_output(e_node,1,'R',current_pp->node);
-			struct node *left_u_node = connect_with_entry(e_node,gen_a_node(current_pp->node));
+			addOutput(e_node,1,'R',current_pp->node);
+			struct node *left_u_node = connectWithEntry(e_node,genANode(current_pp->node));
 			//part 2.1.2
 			current_pp = current_pp->next;
 			if(current_pp != 0) {
 				if(current_pp->node->type == 'U'){ //second partial problem
-					struct node *c_node = gen_node('C',0,0);
-					insert_node_after(e_node,c_node);
-					add_output(c_node,1,0,e_node->out->target);
+					struct node *c_node = GenNode('C',0,0);
+					appendNode(e_node,c_node);
+					addOutput(c_node,1,0,e_node->out->target);
 					e_node->out->target = c_node;
 					while(current_pp != 0) {
-						printf("INFO:\tIn Loop\n");
+						std::cout << "INFO:\tIn Loop" << std::endl;
 						if(current_pp->node->type == 'U') {
-						add_output(c_node,1,0,current_pp->node);
+						addOutput(c_node,1,0,current_pp->node);
 						struct partial_problem *left_problem = current_pp->prev;
 						struct node *right_node = current_pp->node;
 						int absolute_independency = 1;
 						while(left_problem->node->type != 'E') {
-							struct dependency *depend = check_dependency(e_problem,current_pp,left_problem);
+							struct dependency *depend = checkDependency(e_problem,current_pp,left_problem);
 							if(depend->type == ABSOLUTE_DEPENDENCY) {
-								right_node = gen_absolute_dependency(get_last_node(left_problem),right_node);
+								right_node = genAbsoluteDependency(getLastNode(left_problem),right_node);
 								absolute_independency = 0;
 							} else if(depend->type == G_INDEPENDENCY) {
-								right_node = gen_g_independency(get_last_node(left_problem),right_node,depend->g_vars);
+								right_node = genGDependency(getLastNode(left_problem),right_node,depend->g_vars);
 								absolute_independency = 0;
 							} else if(depend->type == I_INDEPENDENCY) {
-								right_node = gen_i_independency(get_last_node(left_problem),right_node,depend->i_vars);
+								right_node = genIDependency(getLastNode(left_problem),right_node,depend->i_vars);
 								absolute_independency = 0;
 							} else if(depend->type == GI_INDEPENDENCY) {
-								right_node = gen_g_i_independency(get_last_node(left_problem),right_node,depend->g_vars,depend->i_vars);
+								right_node = genGIDependency(getLastNode(left_problem),right_node,depend->g_vars,depend->i_vars);
 								absolute_independency = 0;
 							}
 							left_problem = left_problem->prev;
 						}
 						if(absolute_independency) {
-							right_node = gen_a_node(right_node);
+							right_node = genANode(right_node);
 						}
-						left_u_node = connect_with_entry(left_u_node,right_node);
+						left_u_node = connectWithEntry(left_u_node,right_node);
 						current_pp = current_pp->next;
 						} else {
 							break;
@@ -632,24 +627,24 @@
 					}
 				}
 
-				struct node *r_node = gen_node('R',0,0);
-				insert_node_after(left_u_node,r_node);
-				add_output(left_u_node,1,0,r_node);
+				struct node *r_node = GenNode('R',0,0);
+				appendNode(left_u_node,r_node);
+				addOutput(left_u_node,1,0,r_node);
 
 			} else {
-				struct node *r_node = gen_node('R',0,0);
-				insert_node_after(left_u_node,r_node);
-				add_output(left_u_node,1,0,r_node);
+				struct node *r_node = GenNode('R',0,0);
+				appendNode(left_u_node,r_node);
+				addOutput(left_u_node,1,0,r_node);
 			}
 		} else {
-			struct node *r_node = gen_node('R',0,0);
-			insert_node_after(e_node,r_node);
-			add_output(e_node,1,0,r_node);
+			struct node *r_node = GenNode('R',0,0);
+			appendNode(e_node,r_node);
+			addOutput(e_node,1,0,r_node);
 		}
 	}
 
 	int main(int argc, char **argv) {
-		printf("INFO:\tProgram started.\n");
+		std::cout << "INFO:\tProgram started.\n" << std::endl;
 
 		var_head = 0;
 		var_tail = 0;
@@ -657,14 +652,15 @@
 		pp_tail = 0;
 
 		yyparse();
-		printf("INFO:\tStarting Schwinn...\n");
-		schwinn(pp_head);
-		printf("INFO:\tPrinting Node-Table...\n");
-		print_table();
-		printf("INFO:\tSuccess. Terminating...\n");
+		std::cout << "INFO:\tStarting Schwinn...\n" << std::endl;
+		schwinnAlgorithm(pp_head);
+		std::cout << "INFO:\tPrinting Node-Table...\n" << std::endl;
+		printTable();
+		std::cout << "INFO:\tSuccess.\n" << std::endl;
 		return 0;
 	}
-	struct node *connect_and_number_nodes(struct partial_problem *pp) {
+
+	struct node *connectAndNumberNodes(struct partial_problem *pp) {
 		struct node *head = pp->node;
 		struct node *current = head;
 		int index = 1;
@@ -687,38 +683,49 @@
 		return head;
 	}
 
-	int print_table_entry(struct node *node,FILE *output_stream){
-		fprintf(output_stream,"%-5d%-3c",node->index,node->type);
-		struct output *out = node->out;
-		while(out!=0) {
-			if(out->type != 0) {
-				fprintf(output_stream,"%c:(%d,%d) ",out->type,out->target->index,out->port);
-			} else {
-				fprintf(output_stream,"(%d,%d) ",out->target->index,out->port);
-			}
-			out = out->next;
-		}
-		struct variable *vars = node->vars;
-		while(vars!=0) {
-			fprintf(output_stream,"%s,",vars->name);
-			vars = vars->next;
-		}
-		fprintf(output_stream,"\n");
+	void printTableEntry(struct node *node, ofstream &os){
+    os << node->index << "\t| " << node->type << " | ";
+
+    struct output *out = node->out;
+
+    while (out) {
+      if (out->type) {
+        os << out->type << ": (" << out->target->index << "," << out->port << ") ";
+      } else {
+        os << "(" << out->target->index << "," << out->port << ") ";
+      }
+      out = out->next;
+    }
+
+    os << "| ";
+
+    struct variable *vars = node->vars;
+
+    while (vars) {
+      os << vars->name << ",";
+      vars = vars->next;
+    }
+    os << endl;
 	}
 
-	void print_table() {
-		struct node *current = connect_and_number_nodes(pp_head);
-		FILE *table_out;
-		table_out = fopen("output.md","w");
+	void printTable() {
+		struct node *current = connectAndNumberNodes(pp_head);
+
+    ofstream os;
+    os.open("output.md");
+
+    // insert header of the MD table_out
+    os << "Node ID | Node Type | Output | Comment" << endl;
+    os << ":------ | :-------- | :----- | :------" << endl;
 
 		while(current != 0) {
-			print_table_entry(current,table_out);
+			printTableEntry(current, os);
 			current = current->next;
 		}
 
-		fclose(table_out);
+    os.close();
 	}
 
 	void yyerror (char *message){
-		printf("\nParser Error in line %d:\n%s\n", lines, message);
+		std::cout << "\nParser Error in line " << lines << std::endl << ":" << message << std::endl;
 	}

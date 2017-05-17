@@ -2,8 +2,8 @@
 #define DEFINITIONS_H
 
 typedef struct variable variable;
-typedef struct output output;
-typedef struct node node;
+typedef struct Output Output;
+typedef struct Node Node;
 typedef struct partial_problem partial_problem;
 typedef struct dependency dependency;
 
@@ -17,25 +17,36 @@ struct variable{
   struct variable *next;
 };
 
-struct output{
+struct Output{
   int port;
   char type;
-  struct node *target;
-  struct output *next;
+  struct Node *target;
+  struct Output *next;
+
+  Output(int p, char t, Node *targ) :
+  port(p), type(t), target(targ) {
+    next = nullptr;
+  }
 };
 
-struct node{
+struct Node{
   int index;
   char type;
   struct variable *vars;
-  struct output *out;
-  struct node *next;
-  struct node *prev;
+  struct Output *out;
+  struct Node *next;
+  struct Node *prev;
+
+  Node(char t, Output *o, variable *v) :
+  type(t), out(o), vars(v) {
+    prev = nullptr;
+    next = nullptr;
+  }
 };
 
 struct partial_problem{
   struct variable *var;
-  struct node *node;
+  struct Node *node;
   struct partial_problem *next;
   struct partial_problem *prev;
 };

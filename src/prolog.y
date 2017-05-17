@@ -68,6 +68,89 @@ void checkForEquals(variable *current_var, variable *check_var, partial_problem 
 		}
 	}
 
+	void check_for_g_abs(variable *check_equals, variable *entry_var, dependency *depend, partial_problem *entry){
+	int found = 0;
+			 variable *tmp_check_equals = check_equals;
+		while(tmp_check_equals != nullptr) {
+			found = 0;
+			entry_var = entry->var;
+			while(entry_var != nullptr) {
+				if(strcmp(entry_var->name,tmp_check_equals->name) == 0) {
+					found = 1;
+					if(depend->g_vars == nullptr) {
+						depend->g_vars = new variable;
+						depend->g_vars->name = entry_var->name;
+						depend->type = Independency::G;
+						depend->g_vars->next = nullptr;
+					} else {
+						addVariable(depend->g_vars,entry_var->name);
+					}
+				}
+				entry_var = entry_var->next;
+			}
+			if(!found) {
+				depend->type = Independency::DEPENDEND;
+				return;
+			}
+			tmp_check_equals = tmp_check_equals->next;
+		}
+}
+		void check_for_current_not_in_check(variable *current_var, partial_problem *current, variable *current_different, variable *check_equals){
+		int found = 0;
+		current_var = current->var;
+		while(current_var != nullptr) {
+			found = 0;
+			variable *tmp_check_equals = check_equals;
+			while(tmp_check_equals != nullptr) {
+				if(strcmp(current_var->name,tmp_check_equals->name) == 0) {
+					found = 1;
+				}
+				tmp_check_equals = tmp_check_equals->next;
+			}
+			if(!found) {
+				if(current_different == nullptr) {
+					current_different = new variable;
+					current_different->name = current_var->name;
+					current_different->next = nullptr;
+				} else {
+					addVariable(current_different,current_var->name);
+				}
+			}
+			current_var = current_var->next;
+		}
+		}
+
+		        void check_for_i_abs(variable *current_different, variable *entry_var, partial_problem *entry, dependency *depend){
+
+		// TODO Put into function
+		//check for I independency on current site and absolute independency
+		while(current_different != nullptr) {
+			entry_var = entry->var;
+			while(entry_var != nullptr) {
+				if(strcmp(current_different->name,entry_var->name) == 0) {
+					if(depend->i_vars == nullptr) {
+						depend->i_vars = new variable;
+						depend->i_vars->name = entry_var->name;
+						if(depend->type == Independency::G) {
+							depend->type = Independency::GI;
+						} else {
+							depend->type = Independency::I;
+						}
+						depend->i_vars->next = nullptr;
+					} else {
+						addVariable(depend->i_vars,entry_var->name);
+					}
+				}
+				entry_var = entry_var->next;
+			}
+			current_different = current_different->next;
+		}
+		if(depend->type == 0) {
+			depend->type = Independency::ABSOLUTE;
+			return;
+		}
+		}
+
 	void checkGAbs(variable *check_equals, variable *entry_var, dependency *depend, partial_problem *entry){
 	int found = 0;
 			 variable *tmp_check_equals = check_equals;
@@ -460,114 +543,45 @@ dependency *checkDependency( partial_problem *entry,  partial_problem *current, 
   depend->type = Independency::DEFAULT;
   depend->i_vars = nullptr;
   depend->g_vars = nullptr;
+  int found = 0;
+  variable *tmp_check_equals = check_equals;
 
   //check for equals between current and check
   checkForEquals(current_var, check_var, check, check_equals);
-
-  // TODO Put into function
-  //check for G independency/absolute dependency
-  int found;
-  variable *tmp_check_equals = check_equals;
-  while(tmp_check_equals != nullptr) {
-    found = 0;
-    entry_var = entry->var;
-    while(entry_var != nullptr) {
-      if(strcmp(entry_var->name,tmp_check_equals->name) == 0) {
-        found = 1;
-        if(depend->g_vars == nullptr) {
-          depend->g_vars = new variable;
-          depend->g_vars->name = entry_var->name;
-          depend->type = Independency::G;
-          depend->g_vars->next = nullptr;
-        } else {
-          addVariable(depend->g_vars,entry_var->name);
-        }
-      }
-      entry_var = entry_var->next;
-    }
-    if(!found) {
-      depend->type = Independency::DEPENDEND;
-      return depend;
-    }
-    tmp_check_equals = tmp_check_equals->next;
+  check_for_g_abs(check_equals, entry_var, depend, entry);
+  if(depend->type = Independency::DEPENDEND) {
+    return depend;
+  }
+  check_for_current_not_in_check(current_var, current, current_different, check_equals);
+  check_for_i_abs(current_different, entry_var, entry, depend);
+  if(depend->type = Independency::DEPENDEND) {
+    return depend;
   }
 
+  if(depend->type == Independency::GI || depend->type == Independency::I) {
+  //look for all that are in check but not in current
+  check_var = check->var;
   // TODO Put into function
-  //look for all that are in current but not in check
-  current_var = current->var;
-  while(current_var != nullptr) {
-    found = 0;
+  while(check_var != nullptr) {
+    int found = 0;
     tmp_check_equals = check_equals;
     while(tmp_check_equals != nullptr) {
-      if(strcmp(current_var->name,tmp_check_equals->name) == 0) {
+      if(strcmp(check_var->name,tmp_check_equals->name) == 0) {
         found = 1;
       }
       tmp_check_equals = tmp_check_equals->next;
     }
     if(!found) {
-      if(current_different == nullptr) {
-        current_different = new variable;
-        current_different->name = current_var->name;
-        current_different->next = nullptr;
-      } else {
-        addVariable(current_different,current_var->name);
-      }
+    if(check_different == nullptr) {
+      check_different = new variable;
+      check_different->name = check_var->name;
+      check_different->next = nullptr;
+    } else {
+      addVariable(check_different,check_var->name);
     }
-    current_var = current_var->next;
   }
-
-  // TODO Put into function
-  //check for I independency on current site and absolute independency
-  while(current_different != nullptr) {
-    entry_var = entry->var;
-    while(entry_var != nullptr) {
-      if(strcmp(current_different->name,entry_var->name) == 0) {
-        if(depend->i_vars == nullptr) {
-          depend->i_vars = new variable;
-          depend->i_vars->name = entry_var->name;
-          if(depend->type == Independency::G) {
-            depend->type = Independency::GI;
-          } else {
-            depend->type = Independency::I;
-          }
-          depend->i_vars->next = nullptr;
-        } else {
-          addVariable(depend->i_vars,entry_var->name);
-        }
-      }
-      entry_var = entry_var->next;
-    }
-    current_different = current_different->next;
-  }
-  if(depend->type == 0) {
-    depend->type = Independency::ABSOLUTE;
-    return depend;
-  }
-
-  if(depend->type == Independency::GI || depend->type == Independency::I) {
-    //look for all that are in check but not in current
-    check_var = check->var;
-    // TODO Put into function
-    while(check_var != nullptr) {
-      found = 0;
-      tmp_check_equals = check_equals;
-      while(tmp_check_equals != nullptr) {
-        if(strcmp(check_var->name,tmp_check_equals->name) == 0) {
-          found = 1;
-        }
-        tmp_check_equals = tmp_check_equals->next;
-      }
-      if(!found) {
-        if(check_different == nullptr) {
-          check_different = new variable;
-          check_different->name = check_var->name;
-          check_different->next = nullptr;
-        } else {
-          addVariable(check_different,check_var->name);
-        }
-      }
-      check_var = check_var->next;
-    }
+  check_var = check_var->next;
+}
 
     // TODO Put into function
     //check for i independency on check site

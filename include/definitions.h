@@ -22,13 +22,6 @@ struct Variable {
   }
 };
 
-struct PartialProblem {
-  struct Variable *var;
-  struct Node *node;
-  struct PartialProblem *next;
-  struct PartialProblem *prev;
-};
-
 struct Output {
   int port;
   char type;
@@ -82,6 +75,21 @@ struct Node {
   }
 };
 
+struct PartialProblem {
+  struct Variable *var;
+  struct Node *node;
+  struct PartialProblem *next;
+  struct PartialProblem *prev;
+
+  Node *getLastNode() {
+    Node *tmp = node;
+    while(nullptr != tmp->next) {
+      tmp = tmp->next;
+    }
+    return tmp;
+  }
+};
+
 struct Dependency {
   Independency type;
   struct Variable *gVars;
@@ -95,19 +103,16 @@ void yyerror(char *);
 void genVarNode(char *);
 void genPartialProblem(char , char *);
 
-Variable *gen_var_from_char(char *);
+Node *genANode(Node *);
+Node *connectWithEntry(Node *, Node *);
+Node *genAbsouluteDependency(Node *, Node *);
+Node *genGIndependency(Node *, Node *, Variable *);
+Node *genIIndependency(Node *, Node *, Variable *);
+Node *genGIIndependency(Node *, Node *, Variable *, Variable *);
 
-Node *gen_a_node(Node *);
-Node *connect_with_entry(Node *, Node *);
-Node *gen_absolute_dependency(Node *, Node *);
-Node *gen_g_independency(Node *, Node *, Variable *);
-Node *gen_i_independency(Node *, Node *, Variable *);
-Node *gen_g_i_independency(Node *, Node *, Variable *, Variable *);
-Node *get_last_node(PartialProblem *);
+Dependency *checkDependency(PartialProblem *, PartialProblem *, PartialProblem *);
 
-Dependency *check_dependency(PartialProblem *, PartialProblem *, PartialProblem *);
-
-Node *connect_and_number_nodes(PartialProblem *);
+Node *connectAndNumberNodes(PartialProblem *);
 void printTableEntry();
 void printTable();
 

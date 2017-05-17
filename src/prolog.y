@@ -1,7 +1,6 @@
 %{
 #include <iostream>
-#include <fstream>
-#include <string>
+#include <stdio.h>
 #include <string.h>
 
 #include "../include/definitions.h"
@@ -12,192 +11,26 @@ extern "C" FILE *yyin;
 extern "C" int lines;
 extern "C" char *yytext;
 
-#define CHUNK 1024 /*read 1024 bytes at a time */
+Variable *varListHead;
+Variable *varListTail;
+PartialProblem *firstPartProb;
+PartialProblem *lastPartProb;
 
-int problem_counter;
-
-variable *var_head;
-variable *var_tail;
-partial_problem *pp_head;
-partial_problem *pp_tail;
-
-void yyerror(char *message);
-
-void genVarNode(char *var_name);
-void genPartialProblemNode(char type, char *info);
-
-variable *genVarFromChar(char *info);
-void appendNode( Node *current,  Node *newNode);
-
-void insertOutput( Output *current,  Output *newOutput);
-void addOutput( Node *current, int port, char type,  Node *target);
-
-Node *genANode(Node *current);
-Node *connectWithEntry( Node *left,  Node *right);
-Node *genAbsoluteDependency( Node *left,  Node *right);
-Node *genGDependency( Node *left,  Node *right,  variable *vars);
-Node *genIDependency( Node *left,  Node *right,  variable *vars);
-Node *genGIDependency( Node *left,  Node *right,  variable *g_vars, variable *i_vars);
-Node *getLastNode(partial_problem *pp);
-
-void addVariable( variable *current, char *newVar);
-dependency *checkDependency( partial_problem *entry,  partial_problem *current,  partial_problem *check);
-
-Node *connectAndNumberNodes( partial_problem *pp);
-void printTable();
-int printTableEntries( Node *node,FILE *output_stream);
-
-void checkForEquals(variable *current_var, variable *check_var, partial_problem *check, variable *check_equals){
-	while(current_var != nullptr) {
-			check_var = check->var;
-			while(check_var != nullptr) {
-				if(strcmp(current_var->name,check_var->name) == 0) {
-					if(check_equals == nullptr) {
-						check_equals = new variable;
-						check_equals->name = check_var->name;
-						check_equals->next = nullptr;
-					} else {
-						addVariable(check_equals,check_var->name);
-					}
-				}
-				check_var = check_var->next;
-			}
-			current_var = current_var->next;
-		}
-	}
-
-	void check_for_g_abs(variable *check_equals, variable *entry_var, dependency *depend, partial_problem *entry){
-	int found = 0;
-			 variable *tmp_check_equals = check_equals;
-		while(tmp_check_equals != nullptr) {
-			found = 0;
-			entry_var = entry->var;
-			while(entry_var != nullptr) {
-				if(strcmp(entry_var->name,tmp_check_equals->name) == 0) {
-					found = 1;
-					if(depend->g_vars == nullptr) {
-						depend->g_vars = new variable;
-						depend->g_vars->name = entry_var->name;
-						depend->type = Independency::G;
-						depend->g_vars->next = nullptr;
-					} else {
-						addVariable(depend->g_vars,entry_var->name);
-					}
-				}
-				entry_var = entry_var->next;
-			}
-			if(!found) {
-				depend->type = Independency::DEPENDEND;
-				return;
-			}
-			tmp_check_equals = tmp_check_equals->next;
-		}
-}
-		void check_for_current_not_in_check(variable *current_var, partial_problem *current, variable *current_different, variable *check_equals){
-		int found = 0;
-		current_var = current->var;
-		while(current_var != nullptr) {
-			found = 0;
-			variable *tmp_check_equals = check_equals;
-			while(tmp_check_equals != nullptr) {
-				if(strcmp(current_var->name,tmp_check_equals->name) == 0) {
-					found = 1;
-				}
-				tmp_check_equals = tmp_check_equals->next;
-			}
-			if(!found) {
-				if(current_different == nullptr) {
-					current_different = new variable;
-					current_different->name = current_var->name;
-					current_different->next = nullptr;
-				} else {
-					addVariable(current_different,current_var->name);
-				}
-			}
-			current_var = current_var->next;
-		}
-		}
-
-		        void check_for_i_abs(variable *current_different, variable *entry_var, partial_problem *entry, dependency *depend){
-
-		// TODO Put into function
-		//check for I independency on current site and absolute independency
-		while(current_different != nullptr) {
-			entry_var = entry->var;
-			while(entry_var != nullptr) {
-				if(strcmp(current_different->name,entry_var->name) == 0) {
-					if(depend->i_vars == nullptr) {
-						depend->i_vars = new variable;
-						depend->i_vars->name = entry_var->name;
-						if(depend->type == Independency::G) {
-							depend->type = Independency::GI;
-						} else {
-							depend->type = Independency::I;
-						}
-						depend->i_vars->next = nullptr;
-					} else {
-						addVariable(depend->i_vars,entry_var->name);
-					}
-				}
-				entry_var = entry_var->next;
-			}
-			current_different = current_different->next;
-		}
-		if(depend->type == 0) {
-			depend->type = Independency::ABSOLUTE;
-			return;
-		}
-		}
-
-	void checkGAbs(variable *check_equals, variable *entry_var, dependency *depend, partial_problem *entry){
-	int found = 0;
-			 variable *tmp_check_equals = check_equals;
-		while(tmp_check_equals != nullptr) {
-			found = 0;
-			entry_var = entry->var;
-			while(entry_var != nullptr) {
-				if(strcmp(entry_var->name,tmp_check_equals->name) == 0) {
-					found = 1;
-					if(depend->g_vars == nullptr) {
-						depend->g_vars = new variable;
-						depend->g_vars->name = entry_var->name;
-						depend->type = Independency::G;
-						depend->g_vars->next = nullptr;
-					} else {
-						addVariable(depend->g_vars,entry_var->name);
-					}
-				}
-				entry_var = entry_var->next;
-			}
-			if(!found) {
-				depend->type = Independency::DEPENDEND;
-				return;
-			}
-			tmp_check_equals = tmp_check_equals->next;
-		}
-}
-
-void schwinnAlgorithm( partial_problem *current_pp);
-int table_counter = 1;
-
-using namespace std;
 %}
+%union{
+  char *str;
+  int num;
+}
+%start clause
+%token DEF DOT COMMA POPEN PCLOSE LOPEN LCLOSE
+%token PIPE PLUS MINUS ASTERISK DIV
+%token SMALLER SEQUAL GREATER GEQUAL EQUAL UNEQUAL
+%token NOT IS
+%token <num> NUMBER
+%token <str> CONST VAR
 
-  %union{
-    char *str;
-    int num;
-  }
-
-  %start clause
-  %token DEF DOT
-  %token PLUS MINUS EQUAL NOT IS
-  %token UNEQUAL SMALLER SEQUAL GREATER GEQUAL
-  %token COMMA POPEN PCLOSE LOPEN LCLOSE PIPE ASTERISK COLON DIV
-  %token <num> NUMBER
-  %token <str> CONST VAR
-
-  %left PLUS MINUS ASTERISK DIV
-  %left UNEQUAL SMALLER SEQUAL GREATER GEQUAL
+%left PLUS MINUS ASTERISK DIV
+%left UNEQUAL SMALLER SEQUAL GREATER GEQUAL
 %%
 
 clause: clause expression
@@ -212,19 +45,22 @@ rule: fact DEF factList
       ;
 
 fact: CONST POPEN params PCLOSE {
-        genPartialProblemNode('E',$1); var_head = nullptr;
+        genPartialProblem('E',$1); varListHead = nullptr;
       }
       ;
 
 subRule:  CONST POPEN params PCLOSE {
-            genPartialProblemNode('U', $1); var_head = nullptr;
+            genPartialProblem('U', $1); varListHead = nullptr;
           }
           | arithmeticExpr {
-              genPartialProblemNode('U',""); var_head = nullptr;
+              genPartialProblem('U',""); varListHead = nullptr;
           }
           ;
 
-arithmeticExpr: VAR operator arithmeticRhs;
+arithmeticExpr: VAR operator arithmeticRhs {
+                  genVarNode($1);
+                }
+                ;
 
 operator: PLUS
           | MINUS
@@ -239,7 +75,9 @@ operator: PLUS
           | IS
           ;
 
-arithmeticRhs:  VAR
+arithmeticRhs:  VAR {
+                  genVarNode($1);
+                }
                 | NUMBER
                 | CONST
                 | arithmeticExpr
@@ -276,133 +114,100 @@ param:  CONST
             genVarNode($1);
           }
         ;
-%%
-void genVarNode(char *var_name){
-  variable *ptr = new variable;
-  ptr->name = var_name;
-  ptr->next = nullptr;
-  if (nullptr == var_head){ // Head not set yet
-    var_head = ptr;
-    var_tail = ptr;
-  } else {
-    var_tail->next = ptr;
-    var_tail = ptr;
-  }
-}
 
-void genPartialProblemNode(char type, char *info){
-  partial_problem *ptr = new partial_problem;
-  ptr->var = var_head;
+
+%%
+  void genVarNode(char *var_name){
+    Variable *ptr = new Variable(var_name);
+    if (!varListHead){
+      varListHead = ptr;
+      varListTail = ptr;
+    } else{
+      varListTail->next = ptr;
+      varListTail = ptr;
+    }
+  }
+
+void genPartialProblem(char type, char *info){
+  PartialProblem *ptr = new PartialProblem;
+  ptr->var = varListHead;
   ptr->next = nullptr;
   ptr->prev = nullptr;
-  ptr->node = new Node(type, nullptr, var_head);
-  if (!pp_head) {
-    pp_head = ptr;
-    pp_tail = ptr;
-    } else {
-      pp_tail->next = ptr;
-      ptr->prev = pp_tail;
-      pp_tail = ptr;
-    }
-  }
-
-  variable *genVarFromChar(char *info) {
-    variable *var = new variable;
-    var->next = nullptr;
-    var->name = info;
-    return var;
-  }
-
-void appendNode( Node *current,  Node *newNode) {
-  newNode->next = current->next;
-  if(current->next != nullptr) {
-    current->next->prev = newNode;
-  }
-  newNode->prev = current;
-  current->next = newNode;
-}
-
-void insertOutput( Output *current,  Output *newOutput) {
-  newOutput->next = current->next;
-  current->next = newOutput;
-}
-
-void addOutput( Node *current, int port, char type,  Node *target) {
-  if(current->out != nullptr) {
-    Output *last = current->out;
-    while(last->next != nullptr) {
-      last = last->next;
-    }
-    insertOutput(last, new Output(port, type, target));
-    } else {
-      current->out = new Output(port, type, target);
+  ptr->node = new Node(type, nullptr, varListHead);
+  if (!firstPartProb){
+    firstPartProb = ptr;
+    lastPartProb = ptr;
+  } else{
+    lastPartProb->next = ptr;
+    ptr->prev = lastPartProb;
+    lastPartProb = ptr;
   }
 }
 
-Node *genANode( Node *current) {
+Node *gen_a_node(Node *current) {
   if(current->type == 'T') {
     current->type = 'A';
     return current;
   } else {
-    Node *a_node = new Node('A', nullptr, nullptr);
-    appendNode(current,a_node);
-    addOutput(current,1,0,a_node);
+    Node *a_node = new Node('A' , nullptr, nullptr);
+    current->insertAfter(a_node);
+    current->addOutput(1, 0, a_node);
     return a_node;
   }
 }
 
-Node *gen_tmp_node( Node *current) {
-  Node *tmp_node = new Node('T', nullptr, nullptr);
-  appendNode(current,tmp_node);
-  addOutput(current,1,0,tmp_node);
+Node *gen_tmp_node(Node *current) {
+  Node *tmp_node = new Node('T' , nullptr, nullptr);
+  current->insertAfter(tmp_node);
+  current->addOutput(1, 0, tmp_node);
 
   return tmp_node;
 }
 
-Node *connectWithEntry( Node *left,  Node *right) {
-  Node *u_node = new Node('U', nullptr, nullptr);
+Node *connect_with_entry(Node *left, Node *right) {
+  Node *u_node = new Node('U' , nullptr, nullptr);
   if(right->type == 'T') {
-    genANode(right);
+    gen_a_node(right);
   }
-  appendNode(left,u_node);
-  if(left->type == 'E') {
-    addOutput(left,2,'L',u_node);
+    left->insertAfter(u_node);
+    if(left->type == 'E') {
+      left->addOutput(2, 'L', u_node);
   } else {
-    addOutput(left,2,0,u_node);
+    left->addOutput(2, 0, u_node);
   }
-  addOutput(right,1,0,u_node);
+  right->addOutput(1, 0, u_node);
 
   return u_node;
 }
 
-Node *genAbsoluteDependency( Node *left,  Node *right) {
+Node *gen_absolute_dependency(Node *left, Node *right) {
   if(left->type == 'A' && left->out != 0) {
-    Node *c_node = new Node('C',left->out, nullptr);
-    left->out = new Output(1, 0, c_node);
-    appendNode(left,c_node);
+    Node *c_node = new Node('C', left->out, nullptr);
+    left->out = new Output(1,0,c_node);
+    left->insertAfter(c_node);
     left = c_node;
-}
+  }
 
-Node *u_node;
+  Node *u_node;
   if(right->type == 'T') {
     right->type = 'U';
-    addOutput(left,1,0,right);
+    left->addOutput(1, 0, right);
     u_node = right;
   } else {
-    u_node = new Node('U', nullptr, nullptr);
-    appendNode(right,u_node);
-    addOutput(left,1,0,u_node);
-    addOutput(right,2,0,u_node);
+    u_node = new Node('U' , nullptr, nullptr);
+    right->insertAfter(u_node);
+    left->addOutput(1, 0, u_node);
+    right->addOutput(2, 0, u_node);
   }
 
   return gen_tmp_node(u_node);
 }
 
-Node *genGDependency( Node *left,  Node *right,  variable *vars) {
+Node *gen_g_independency(Node *left, Node *right, Variable *vars) {
   if(left->type == 'A' && left->out != 0) {
     Node *c_node = new Node('C', left->out, nullptr);
-    left->out = new Output(1, 0, c_node);
-    appendNode(left,c_node);
+    left->out = new Output(1,0,c_node);
+    left->insertAfter(c_node);
     left = c_node;
   }
 
@@ -413,25 +218,24 @@ Node *genGDependency( Node *left,  Node *right,  variable *vars) {
     g_node = right;
   } else {
     g_node = new Node('G', nullptr, vars);
-    appendNode(right,g_node);
-    addOutput(right,1,0,g_node);
+    right->insertAfter(g_node);
+    right->addOutput(1, 0, g_node);
   }
   Node *u_node = new Node('U', nullptr, nullptr);
-  appendNode(g_node,u_node);
-  addOutput(left,1,0,u_node);
-  addOutput(g_node,2,'L',u_node);
+  g_node->insertAfter(u_node);
+  left->addOutput(1, 0, u_node);
+  g_node->addOutput(2, 'L', u_node);
 
   Node *tmp_node = gen_tmp_node(u_node);
-  addOutput(g_node,1,'R',u_node->out->target);
-
+  g_node->addOutput(1, 'R', u_node->out->target);
   return tmp_node;
 }
 
-Node *genIDependency (Node *left,  Node *right,  variable *vars) {
+Node *gen_i_independency(Node *left, Node *right, Variable *vars) {
   if(left->type == 'A' && left->out != 0) {
     Node *c_node = new Node('C', left->out, nullptr);
     left->out = new Output(1, 0, c_node);
-    appendNode(left,c_node);
+    left->insertAfter(c_node);
     left = c_node;
   }
 
@@ -440,312 +244,342 @@ Node *genIDependency (Node *left,  Node *right,  variable *vars) {
     right->type = 'I';
     right->vars = vars;
     i_node = right;
-    } else {
-      i_node = new Node('I', nullptr, vars);
-      appendNode(right,i_node);
-      addOutput(right,1,0,i_node);
-    }
-    Node *u_node = new Node('U', nullptr, nullptr);
-    appendNode(i_node,u_node);
-    addOutput(left,1,0,u_node);
-    addOutput(i_node,2,'L',u_node);
+  } else {
+    i_node = new Node('I', nullptr, vars);
+    right->insertAfter(i_node);
+    right->addOutput(1, 0, i_node);
+  }
+  Node *u_node = new Node('U', nullptr, nullptr);;
+  i_node->insertAfter(u_node);
+  left->addOutput(1, 0, u_node);
+  i_node->addOutput(2, 'L', u_node);
 
-    Node *tmp_node = gen_tmp_node(u_node);
-    addOutput(i_node,1,'R',u_node->out->target);
-
-    return tmp_node;
+  Node *tmp_node = gen_tmp_node(u_node);
+  i_node->addOutput(1, 'R', u_node->out->target);
+  return tmp_node;
 }
 
-Node *genGIDependency( Node *left,  Node *right,  variable *g_vars,  variable *i_vars) {
+Node *gen_g_i_independency(Node *left, Node *right, Variable *gVars, Variable *iVars) {
   if(left->type == 'A' && left->out != 0) {
     Node *c_node = new Node('C', left->out, nullptr);
     left->out = new Output(1, 0, c_node);
-    appendNode(left,c_node);
+    left->insertAfter(c_node);
     left = c_node;
   }
 
   Node *g_node;
   if(right->type == 'T') {
     right->type = 'G';
-    right->vars = g_vars;
+    right->vars = gVars;
     g_node = right;
   } else {
-    g_node = new Node('G', nullptr, g_vars);
-    appendNode(right,g_node);
-    addOutput(right,1,0,g_node);
+    g_node = new Node('G', nullptr, gVars);
+    right->insertAfter(g_node);
+    right->addOutput(1, 0, g_node);
   }
   Node *u_node = new Node('U', nullptr, nullptr);
-  Node *i_node = new Node('I', nullptr, i_vars);
-  appendNode(g_node,i_node);
-  appendNode(i_node,u_node);
-  addOutput(left,1,0,u_node);
-  addOutput(g_node,2,'L',u_node);
-  addOutput(g_node,1,'R',i_node);
-  addOutput(i_node,2,'L',u_node);
+  Node *i_node = new Node('I', nullptr, iVars);
+  g_node->insertAfter(i_node);
+  i_node->insertAfter(u_node);
+  left->addOutput(1, 0, u_node);
+  g_node->addOutput(2, 'L', u_node);
+  g_node->addOutput(1, 'R', i_node);
+  i_node->addOutput(2, 'L', u_node);
 
   Node *tmp_node = gen_tmp_node(u_node);
-  addOutput(i_node,1,'R',u_node->out->target);
-
+  i_node->addOutput(1, 'R', u_node->out->target);
   return tmp_node;
 }
 
-Node *getLastNode( partial_problem *pp) {
+Node *get_last_node(PartialProblem *pp) {
   Node *last_node = pp->node;
-  while(last_node->next != nullptr) {
+  while(last_node->next != 0) {
     last_node = last_node->next;
   }
 
   return last_node;
 }
 
-void addVariable( variable *current, char *newVar) {
-  variable * tmp = new variable;
-  tmp->name = newVar;
-  tmp->next = nullptr;
-  while(current->next != nullptr) {
-    current = current->next;
-  }
-  current->next = tmp;
-}
+Dependency *check_dependency(PartialProblem *entry, PartialProblem *current,  PartialProblem *check) {
+  Variable *entry_var = entry->var;
+  Variable *current_var = current->var;
+  Variable *check_var = check->var;
 
-dependency *checkDependency( partial_problem *entry,  partial_problem *current,  partial_problem *check) {
-  variable *entry_var = entry->var;
-  variable *current_var = current->var;
-  variable *check_var = check->var;
-
-  variable *check_equals = nullptr;
-  variable *check_different = nullptr;
-  variable *current_different = nullptr;
-  dependency *depend = new dependency;
+  Variable *check_equals = 0;
+  Variable *check_different = 0;
+  Variable *current_different = 0;
+  Dependency *depend = new Dependency;
   depend->type = Independency::DEFAULT;
-  depend->i_vars = nullptr;
-  depend->g_vars = nullptr;
-  int found = 0;
-  variable *tmp_check_equals = check_equals;
+  depend->iVars = 0;
+  depend->gVars = 0;
 
   //check for equals between current and check
-  checkForEquals(current_var, check_var, check, check_equals);
-  check_for_g_abs(check_equals, entry_var, depend, entry);
-  if(depend->type = Independency::DEPENDEND) {
-    return depend;
-  }
-  check_for_current_not_in_check(current_var, current, current_different, check_equals);
-  check_for_i_abs(current_different, entry_var, entry, depend);
-  if(depend->type = Independency::DEPENDEND) {
-    return depend;
+  while(nullptr != current_var) {
+    check_var = check->var;
+    while(nullptr != check_var) {
+      if(strcmp(current_var->name,check_var->name) == 0) {
+        if(nullptr == check_equals) {
+          check_equals = new Variable(check_var->name);
+        } else {
+          check_equals->appendVar(new Variable(check_var->name));
+        }
+      }
+      check_var = check_var->next;
+    }
+    current_var = current_var->next;
   }
 
-  if(depend->type == Independency::GI || depend->type == Independency::I) {
-  //look for all that are in check but not in current
-  check_var = check->var;
-  // TODO Put into function
-  while(check_var != nullptr) {
-    int found = 0;
+  //check for G independency/absolute dependency
+  int found;
+  Variable *tmp_check_equals = check_equals;
+  while(nullptr != tmp_check_equals) {
+    found = 0;
+    entry_var = entry->var;
+    while(nullptr != entry_var) {
+      if(strcmp(entry_var->name,tmp_check_equals->name) == 0) {
+        found = 1;
+        if(nullptr == depend->gVars) {
+          depend->gVars = new Variable(entry_var->name);
+          depend->type = Independency::G;
+        } else {
+          depend->gVars->appendVar(new Variable(entry_var->name));
+        }
+      }
+      entry_var = entry_var->next;
+    }
+    if(!found) {
+      depend->type = Independency::DEPENDEND;
+      return depend;
+    }
+    tmp_check_equals = tmp_check_equals->next;
+  }
+
+//look for all that are in current but not in check
+  current_var = current->var;
+  while(nullptr != current_var) {
+    found = 0;
     tmp_check_equals = check_equals;
-    while(tmp_check_equals != nullptr) {
-      if(strcmp(check_var->name,tmp_check_equals->name) == 0) {
+    while(nullptr != tmp_check_equals) {
+      if(strcmp(current_var->name,tmp_check_equals->name) == 0) {
         found = 1;
       }
       tmp_check_equals = tmp_check_equals->next;
     }
     if(!found) {
-    if(check_different == nullptr) {
-      check_different = new variable;
-      check_different->name = check_var->name;
-      check_different->next = nullptr;
-    } else {
-      addVariable(check_different,check_var->name);
+      if(nullptr == current_different) {
+        current_different = new Variable(current_var->name);
+      } else {
+        current_different->appendVar(new Variable(current_var->name));
+      }
     }
+    current_var = current_var->next;
   }
-  check_var = check_var->next;
-}
 
-    // TODO Put into function
-    //check for i independency on check site
-    while(check_different != nullptr) {
-      entry_var = entry->var;
-      while(entry_var != nullptr) {
-        if(strcmp(check_different->name,entry_var->name) == 0) {
-          if(depend->i_vars == nullptr) {
-            depend->i_vars = new variable;
-            depend->i_vars->name = entry_var->name;
-            if(depend->type == Independency::G) {
-              depend->type = Independency::GI;
-            } else {
-              depend->type = Independency::I;
-            }
-            depend->i_vars->next = nullptr;
+//check for I independency on current site and absolute independency
+  while(nullptr != current_different) {
+    entry_var = entry->var;
+    while(nullptr != entry_var) {
+      std::cout << "Current: " << current_different->name << std::endl;
+      std::cout << "Entry: " << entry_var->name << std::endl;
+      std::cout << "Comp: " << strcmp(current_different->name,entry_var->name) << std::endl;
+      if(strcmp(current_different->name,entry_var->name) == 0) {
+        if(nullptr == depend->iVars) {
+          depend->iVars = new Variable(entry_var->name);
+          if(depend->type == Independency::G) {
+            depend->type = Independency::GI;
           } else {
-            addVariable(depend->i_vars,entry_var->name);
+            depend->type = Independency::I;
+          }
+        } else {
+          depend->iVars->appendVar(new Variable(entry_var->name));
+        }
+      }
+      entry_var = entry_var->next;
+    }
+    current_different = current_different->next;
+  }
+  if(depend->type == 0) {
+    depend->type = Independency::ABSOLUTE;
+    return depend;
+  }
+
+  if(depend->type == Independency::GI || depend->type == Independency::I) {
+    //look for all that are in check but not in current
+    check_var = check->var;
+    while(nullptr != check_var) {
+      found = 0;
+      tmp_check_equals = check_equals;
+      while(nullptr != tmp_check_equals) {
+        if(strcmp(check_var->name,tmp_check_equals->name) == 0) {
+          found = 1;
+        }
+        tmp_check_equals = tmp_check_equals->next;
+      }
+      if(!found) {
+        if(nullptr == check_different) {
+          check_different = new Variable(check_var->name);
+          } else {
+            check_different->appendVar(new Variable(check_var->name));
           }
         }
-        entry_var = entry_var->next;
+        check_var = check_var->next;
       }
-      check_different = check_different->next;
+
+      //check for i independency on check site
+      while(nullptr != check_different) {
+        entry_var = entry->var;
+        while(nullptr != entry_var) {
+          if(strcmp(check_different->name,entry_var->name) == 0) {
+            if(depend->iVars == 0) {
+              depend->iVars = new Variable(entry_var->name);
+              if(depend->type == Independency::G) {
+                depend->type = Independency::GI;
+              } else {
+                depend->type = Independency::I;
+              }
+            } else {
+              depend->iVars->appendVar(new Variable(entry_var->name));
+            }
+          }
+          entry_var = entry_var->next;
+        }
+        check_different = check_different->next;
+      }
     }
-  }
-  return depend;
+    return depend;
   }
 
-void schwinnAlgorithm( partial_problem *current_pp) {
-  partial_problem *e_problem = current_pp;
+void paperAlgorithm(PartialProblem *current_pp) {
+  PartialProblem *e_problem = current_pp;
   Node *e_node = e_problem->node;
   current_pp = current_pp->next;
   //part 2.1.1
-  if(current_pp != nullptr) {
-    addOutput(e_node,1,'R',current_pp->node);
-    Node *left_u_node = connectWithEntry(e_node,genANode(current_pp->node));
+  if(current_pp != 0) {
+    e_node->addOutput(1, 'R', current_pp->node);
+    Node *left_u_node = connect_with_entry(e_node,gen_a_node(current_pp->node));
     //part 2.1.2
     current_pp = current_pp->next;
-    if(current_pp != nullptr) {
+    if(current_pp != 0) {
       if(current_pp->node->type == 'U'){ //second partial problem
         Node *c_node = new Node('C', nullptr, nullptr);
-        appendNode(e_node,c_node);
-        addOutput(c_node,1,0,e_node->out->target);
+        e_node->insertAfter(c_node);
+        c_node->addOutput(1, 0, e_node->out->target);
         e_node->out->target = c_node;
-        while(current_pp != nullptr) {
+        while(current_pp != 0) {
           if(current_pp->node->type == 'U') {
-            addOutput(c_node,1,0,current_pp->node);
-            partial_problem *left_problem = current_pp->prev;
+            c_node->addOutput(1, 0, current_pp->node);
+            PartialProblem *left_problem = current_pp->prev;
             Node *right_node = current_pp->node;
             int absolute_independency = 1;
             while(left_problem->node->type != 'E') {
-              dependency *depend = checkDependency(e_problem,current_pp,left_problem);
+              Dependency *depend = check_dependency(e_problem,current_pp,left_problem);
               if(depend->type == Independency::DEPENDEND) {
-                right_node = genAbsoluteDependency(getLastNode(left_problem),right_node);
+                right_node = gen_absolute_dependency(get_last_node(left_problem),right_node);
                 absolute_independency = 0;
-              } else if (depend->type == Independency::G) {
-                right_node = genGDependency(getLastNode(left_problem),right_node,depend->g_vars);
+              } else if(depend->type == Independency::G) {
+                printf("COMMAE ON");
+                right_node = gen_g_independency(get_last_node(left_problem),right_node,depend->gVars);
                 absolute_independency = 0;
-              } else if (depend->type == Independency::I) {
-                right_node = genIDependency(getLastNode(left_problem),right_node,depend->i_vars);
+              } else if(depend->type == Independency::I) {
+                right_node = gen_i_independency(get_last_node(left_problem),right_node,depend->iVars);
                 absolute_independency = 0;
               } else if(depend->type == Independency::GI) {
-                right_node = genGIDependency(getLastNode(left_problem),right_node,depend->g_vars,depend->i_vars);
+                right_node = gen_g_i_independency(get_last_node(left_problem),right_node,depend->gVars,depend->iVars);
                 absolute_independency = 0;
               }
               left_problem = left_problem->prev;
             }
             if(absolute_independency) {
-              right_node = genANode(right_node);
+              right_node = gen_a_node(right_node);
             }
-            left_u_node = connectWithEntry(left_u_node,right_node);
+            left_u_node = connect_with_entry(left_u_node,right_node);
             current_pp = current_pp->next;
-          } else {
-            break;
+            } else {
+              break;
+            }
           }
         }
-      }
 
-      Node *r_node = new Node('R', nullptr, nullptr);
-      appendNode(left_u_node,r_node);
-      addOutput(left_u_node,1,0,r_node);
+        Node *r_node = new Node('R', nullptr, nullptr);
+        left_u_node->insertAfter(r_node);
+        left_u_node->addOutput(1, 0, r_node);
 
       } else {
         Node *r_node = new Node('R', nullptr, nullptr);
-        appendNode(left_u_node,r_node);
-        addOutput(left_u_node,1,0,r_node);
+        left_u_node->insertAfter(r_node);
+        left_u_node->addOutput(1, 0, r_node);
       }
     } else {
       Node *r_node = new Node('R', nullptr, nullptr);
-      appendNode(e_node,r_node);
-      addOutput(e_node,1,0,r_node);
+      e_node->insertAfter(r_node);
+      e_node->addOutput(1, 0, r_node);
     }
-}
+  }
 
 int main(int argc, char **argv) {
-  cout << "INFO:\tProgram started." << endl;
 
-  var_head = nullptr;
-  var_tail = nullptr;
-  pp_head = nullptr;
-  pp_tail = nullptr;
+  varListHead = nullptr;
+  varListTail = nullptr;
+  firstPartProb = nullptr;
+  lastPartProb = nullptr;
 
-  // run parsing process
   yyparse();
-
-  cout << "INFO:\tStarting algorithm..." << endl;
-  schwinnAlgorithm(pp_head);
-  cout << "INFO:\tPrinting Node-Table..." << endl << endl;
+  paperAlgorithm(firstPartProb);
   printTable();
-  cout << "INFO:\tSuccess." << endl;
   return 0;
 }
 
-Node *connectAndNumberNodes( partial_problem *pp) {
+Node *connect_and_number_nodes(PartialProblem *pp) {
   Node *head = pp->node;
   Node *current = head;
   int index = 1;
 
-  while(pp!=nullptr) {
-    while(current->next!=nullptr) {
+  while(pp!=0) {
+    while(current->next!=0) {
       current->index = index;
       index++;
-       current = current->next;
-     }
-     pp = pp->next;
-     if(pp!=nullptr) {
-       current->next = pp->node;
-     }
-     current->index = index;
-     index++;
-     current = current->next;
+      current = current->next;
+    }
+    pp = pp->next;
+    if(pp!=0) {
+      current->next = pp->node;
+    }
+    current->index = index;
+    index++;
+    current = current->next;
   }
 
   return head;
 }
 
-void printTableEntry( Node *node, ofstream &os){
-  os << node->index << "\t| " << node->type << " | ";
-  cout << node->index << "\t" << node->type << "\t";
-
+void printTableEntry(Node *node){
+  printf("%-5d%-3c",node->index,node->type);
   Output *out = node->out;
-
-  while (out) {
-    if (out->type) {
-      os << out->type << ": (" << out->target->index << "," << out->port << ") ";
-      cout << out->type << ": (" << out->target->index << "," << out->port << ") ";
+  while(out!=0) {
+    if(out->type != 0) {
+      printf("%c:(%d,%d) ",out->type,out->target->index,out->port);
     } else {
-      os << "(" << out->target->index << "," << out->port << ") ";
-      cout << "(" << out->target->index << "," << out->port << ") ";
+      printf("(%d,%d) ",out->target->index,out->port);
     }
     out = out->next;
   }
-
-  os << "| ";
-  cout << "\t";
-
-  variable *vars = node->vars;
-
-  while (vars) {
-    os << vars->name << ",";
-    cout << vars->name << ",";
+  Variable *vars = node->vars;
+  while(vars!=0) {
+    printf("%s,",vars->name);
     vars = vars->next;
   }
-  os << endl;
-  cout << endl;
+  printf("\n");
 }
 
 void printTable() {
-  Node *current = connectAndNumberNodes(pp_head);
-
-  ofstream os;
-  os.open("output.md");
-
-  // insert header of the MD table_out
-  os << "Node ID | Node Type | Output | Comment" << endl;
-  os << ":------ | :-------- | :----- | :------" << endl;
+  Node *current = connect_and_number_nodes(firstPartProb);
 
   while(current != 0) {
-    printTableEntry(current, os);
+    printTableEntry(current);
     current = current->next;
   }
-
-  // insert newline after tabel in console output
-  cout << endl;
-  os.close();
 }
 
 void yyerror (char *message){
-  cout << "\nParser Error in line " << lines << endl << ":" << message << endl;
+  printf("\nThis is not a valid prolog syntax.\n");
 }

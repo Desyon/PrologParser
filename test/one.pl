@@ -1,2 +1,1 @@
-a(X,Y,Z) :- b(X), c(X,Y), d(X,Y,Z).
-e(T,W,O) :- f(W, O), g(T, W).
+p1([X,Y|R]) :- p2(X,Z), p3(Y,Z,1.5), p4(X,Y).

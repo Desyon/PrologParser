@@ -18,7 +18,6 @@ PLUS      (\+)
 MINUS     (-)
 ASTERISK  (\*)
 DIV       (\/)
-COLON     (:)
 
 SMALLER (\<)
 SEQUAL  (\<=)
@@ -50,7 +49,6 @@ SPACE (\s+)
 {MINUS}     {return MINUS;}
 {ASTERISK}  {return ASTERISK;}
 {DIV}       {return DIV;}
-{COLON}     {return COLON;}
 {SMALLER}   {return SMALLER;}
 {SEQUAL}    {return SEQUAL;}
 {GREATER}   {return GREATER;}

@@ -1,23 +1,35 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
-typedef struct variable variable;
-typedef struct Output Output;
-typedef struct Node Node;
-typedef struct partial_problem partial_problem;
-typedef struct dependency dependency;
-
 enum Independency {
   // DEFAULT is fallback for "NULL" assignment and never used otherwise
-  DEPENDEND, ABSOLUTE, G, I, GI, DEFAULT
+  DEFAULT, DEPENDEND, G, I, GI, ABSOLUTE
 };
 
-struct variable{
+struct Variable {
   char *name;
-  struct variable *next;
+  struct Variable *next;
+  Variable(char *n) : name(n){
+    next = nullptr;
+  }
+
+  void appendVar(Variable *var) {
+    if(nullptr != next) {
+      next->appendVar(var);
+    } else {
+      next = var;
+    }
+  }
 };
 
-struct Output{
+struct PartialProblem {
+  struct Variable *var;
+  struct Node *node;
+  struct PartialProblem *next;
+  struct PartialProblem *prev;
+};
+
+struct Output {
   int port;
   char type;
   struct Node *target;
@@ -27,34 +39,78 @@ struct Output{
   port(p), type(t), target(targ) {
     next = nullptr;
   }
-};
 
-struct Node{
-  int index;
-  char type;
-  struct variable *vars;
-  struct Output *out;
-  struct Node *next;
-  struct Node *prev;
-
-  Node(char t, Output *o, variable *v) :
-  type(t), out(o), vars(v) {
-    prev = nullptr;
-    next = nullptr;
+  void append(Output *output){
+    if(nullptr != next) {
+      next->append(output);
+    } else {
+      next = output;
+    }
   }
 };
 
-struct partial_problem{
-  struct variable *var;
-  struct Node *node;
-  struct partial_problem *next;
-  struct partial_problem *prev;
+struct Node {
+  int index;
+  char type;
+  struct Output *out;
+  struct Variable *vars;
+  struct Node *next;
+  struct Node *prev;
+
+  Node(char t, Output *o, Variable *v) :
+  type(t), out(o), vars(v) {
+    index = -1;
+    prev = nullptr;
+    next = nullptr;
+  }
+
+  void insertAfter(Node *node) {
+    node->next = next;
+    if(nullptr != next){
+      next->prev = node;
+    }
+    node->prev = this;
+    next = node;
+  }
+
+  void addOutput(int p, char t, Node *targ) {
+    if(nullptr != out) {
+      out->append(new Output(p, t, targ));
+    } else {
+      out = new Output(p, t, targ);
+    }
+  }
 };
 
-struct dependency{
+struct Dependency {
   Independency type;
-  struct variable *g_vars;
-  struct variable *i_vars;
+  struct Variable *gVars;
+  struct Variable *iVars;
 };
+
+// Method declarations
+
+void yyerror(char *);
+
+void genVarNode(char *);
+void genPartialProblem(char , char *);
+
+Variable *gen_var_from_char(char *);
+
+Node *gen_a_node(Node *);
+Node *connect_with_entry(Node *, Node *);
+Node *gen_absolute_dependency(Node *, Node *);
+Node *gen_g_independency(Node *, Node *, Variable *);
+Node *gen_i_independency(Node *, Node *, Variable *);
+Node *gen_g_i_independency(Node *, Node *, Variable *, Variable *);
+Node *get_last_node(PartialProblem *);
+
+Dependency *check_dependency(PartialProblem *, PartialProblem *, PartialProblem *);
+
+Node *connect_and_number_nodes(PartialProblem *);
+void printTableEntry();
+void printTable();
+
+void paperAlgorithm(PartialProblem *);
 
 #endif /* DEFINITIONS_H */

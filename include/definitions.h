@@ -6,6 +6,17 @@ enum Independency {
   DEFAULT, DEPENDEND, G, I, GI, ABSOLUTE
 };
 
+enum Type : char {
+  APPLY = 'A', 
+  COPY = 'C', 
+  UPDATE = 'U', 
+  ENTRY = 'E',
+  RETURN = 'R', 
+  GROUND = 'G', 
+  INDEPENDENCE = 'I',
+  TEMP = 'T'
+};
+
 struct Variable {
   char *name;
   struct Variable *next;
@@ -44,13 +55,13 @@ struct Output {
 
 struct Node {
   int index;
-  char type;
+  Type type;
   struct Output *out;
   struct Variable *vars;
   struct Node *next;
   struct Node *prev;
 
-  Node(char t, Output *o, Variable *v) :
+  Node(Type t, Output *o, Variable *v) :
   type(t), out(o), vars(v) {
     index = -1;
     prev = nullptr;
@@ -101,7 +112,7 @@ struct Dependency {
 void yyerror(char *);
 
 void genVarNode(char *);
-void genPartialProblem(char , char *);
+void genPartialProblem(Type , char *);
 
 Node *genANode(Node *);
 Node *connectWithEntry(Node *, Node *);

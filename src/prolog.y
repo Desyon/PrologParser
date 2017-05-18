@@ -466,20 +466,24 @@ void paperAlgorithm(PartialProblem *currPartProb) {
 
             while(leftProb->node->type != Type::ENTRY) {
               Dependency *depend = checkDependency(eProb, currPartProb, leftProb);
-
-              if(depend->type == Independency::DEPENDEND) {
+            
+              switch(depend->type){
+              case Independency::DEPENDEND : 
                 rightNode = genAbsouluteDependency(leftProb->getLastNode(),rightNode);
                 absoluteInd = false;
-              } else if(depend->type == Independency::G) {
-                printf("COMMAE ON");
+                break;
+              case Independency::G : 
                 rightNode = genGIndependency(leftProb->getLastNode(),rightNode,depend->gVars);
                 absoluteInd = false;
-              } else if(depend->type == Independency::I) {
+                break;
+              case Independency::I :
                 rightNode = genIIndependency(leftProb->getLastNode(),rightNode,depend->iVars);
                 absoluteInd = false;
-              } else if(depend->type == Independency::GI) {
+                break;
+              case Independency::GI :
                 rightNode = genGIIndependency(leftProb->getLastNode(),rightNode,depend->gVars,depend->iVars);
                 absoluteInd = false;
+                break;
               }
               leftProb = leftProb->prev;
             }
@@ -529,13 +533,13 @@ Node *connectAndNumberNodes(PartialProblem *pp) {
   int index = 1;
 
   while(pp!=0) {
-    while(current->next!=0) {
+    while(current->next != nullptr) {
       current->index = index;
       index++;
       current = current->next;
     }
     pp = pp->next;
-    if(pp!=0) {
+    if(pp != nullptr) {
       current->next = pp->node;
     }
     current->index = index;
@@ -550,7 +554,7 @@ void printTableEntry(Node *node){
   // TODO Maybe orient on type of node for nicer output.
   using namespace std;
 
-  cout << node->index << "\t" << node->type << "\t";
+  cout << node->index << "\t" << static_cast<unsigned char>(node->type) << "\t";
   Output *out = node->out;
   int outs = 0;
   while(nullptr != out) {
@@ -590,5 +594,5 @@ void printTable() {
 }
 
 void yyerror (char *message){
-  printf("\nThis is not a valid prolog syntax.\n");
+  std::cout << std::endl << "This is not a valid prolog syntax." << std::endl;
 }

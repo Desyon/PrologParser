@@ -6,7 +6,9 @@ enum Independency {
   DEFAULT, DEPENDEND, G, I, GI, ABSOLUTE
 };
 
-enum Type : char {
+enum Type : unsigned char { 
+  // Type of Nodes
+  // Temp gets casted into another Type when needed
   APPLY = 'A', 
   COPY = 'C', 
   UPDATE = 'U', 

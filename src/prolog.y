@@ -182,7 +182,7 @@ Node *connectWithEntry(Node *left, Node *right) {
 }
 
 Node *genAbsouluteDependency (Node *left, Node *right) {
-  if(left->type == Type::APPLY && left->out != 0) {
+  if(left->type == Type::APPLY && left->out != 0) { //  copy the apply
     Node *cNode = new Node(Type::COPY, left->out, nullptr);
     left->out = new Output(1,0,cNode);
     left->insertAfter(cNode);
@@ -190,11 +190,11 @@ Node *genAbsouluteDependency (Node *left, Node *right) {
   }
 
   Node *uNode;
-  if(right->type == Type::TEMP) {
+  if(right->type == Type::TEMP) { //  make it update node
     right->type = Type::UPDATE;
     left->addOutput(1, 0, right);
     uNode = right;
-  } else {
+  } else {  //  create new update node
     uNode = new Node(Type::UPDATE , nullptr, nullptr);
     right->insertAfter(uNode);
     left->addOutput(1, 0, uNode);
@@ -205,7 +205,7 @@ Node *genAbsouluteDependency (Node *left, Node *right) {
 }
 
 Node *genGIndependency(Node *left, Node *right, Variable *vars) {
-  if(left->type == Type::APPLY && left->out != 0) {
+  if(left->type == Type::APPLY && left->out != nullptr) { //  copy the apply
     Node *cNode = new Node(Type::COPY, left->out, nullptr);
     left->out = new Output(1,0,cNode);
     left->insertAfter(cNode);
@@ -213,15 +213,16 @@ Node *genGIndependency(Node *left, Node *right, Variable *vars) {
   }
 
   Node *gNode;
-  if(right->type == Type::TEMP) {
+  if(right->type == Type::TEMP) { //  make right a ground node
     right->type = Type::GROUND;
     right->vars = vars;
     gNode = right;
-  } else {
+  } else {  //  create new ground node
     gNode = new Node(Type::GROUND, nullptr, vars);
     right->insertAfter(gNode);
     right->addOutput(1, 0, gNode);
   }
+  //  insert update after ground
   Node *uNode = new Node(Type::UPDATE, nullptr, nullptr);
   gNode->insertAfter(uNode);
   left->addOutput(1, 0, uNode);
@@ -233,7 +234,7 @@ Node *genGIndependency(Node *left, Node *right, Variable *vars) {
 }
 
 Node *genIIndependency(Node *left, Node *right, Variable *vars) {
-  if(left->type == Type::APPLY && left->out != 0) {
+  if(left->type == Type::APPLY && left->out != 0) { // copy the apply
     Node *cNode = new Node(Type::COPY, left->out, nullptr);
     left->out = new Output(1, 0, cNode);
     left->insertAfter(cNode);
@@ -241,15 +242,16 @@ Node *genIIndependency(Node *left, Node *right, Variable *vars) {
   }
 
   Node *iNode;
-  if(right->type == Type::TEMP) {
+  if(right->type == Type::TEMP) { //  make right i node
     right->type = Type::INDEPENDENCE;
     right->vars = vars;
     iNode = right;
-  } else {
+  } else {  //  create new i node
     iNode = new Node(Type::INDEPENDENCE, nullptr, vars);
     right->insertAfter(iNode);
     right->addOutput(1, 0, iNode);
   }
+  // insert update after i
   Node *uNode = new Node(Type::UPDATE, nullptr, nullptr);;
   iNode->insertAfter(uNode);
   left->addOutput(1, 0, uNode);
@@ -261,7 +263,7 @@ Node *genIIndependency(Node *left, Node *right, Variable *vars) {
 }
 
 Node *genGIIndependency(Node *left, Node *right, Variable *gVars, Variable *iVars) {
-  if(left->type == Type::APPLY && left->out != 0) {
+  if(left->type == Type::APPLY && left->out != 0) { //  copy the apply
     Node *cNode = new Node(Type::COPY, left->out, nullptr);
     left->out = new Output(1, 0, cNode);
     left->insertAfter(cNode);
@@ -269,19 +271,22 @@ Node *genGIIndependency(Node *left, Node *right, Variable *gVars, Variable *iVar
   }
 
   Node *gNode;
-  if(right->type == Type::TEMP) {
+  if(right->type == Type::TEMP) { // make it ground
     right->type = Type::GROUND;
     right->vars = gVars;
     gNode = right;
-  } else {
+  } else {  //  create new ground
     gNode = new Node(Type::GROUND, nullptr, gVars);
     right->insertAfter(gNode);
     right->addOutput(1, 0, gNode);
   }
+  //  insert new i node after ground
+  //  insert new update node after i
   Node *uNode = new Node(Type::UPDATE, nullptr, nullptr);
   Node *iNode = new Node(Type::INDEPENDENCE, nullptr, iVars);
   gNode->insertAfter(iNode);
   iNode->insertAfter(uNode);
+  //  order the output paths
   left->addOutput(1, 0, uNode);
   gNode->addOutput(2, 'L', uNode);
   gNode->addOutput(1, 'R', iNode);
@@ -292,14 +297,14 @@ Node *genGIIndependency(Node *left, Node *right, Variable *gVars, Variable *iVar
   return tmpNode;
 }
 
-Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  PartialProblem *check) {
+Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  PartialProblem *check) { // check dependencies between two partial problems
   
   // Initialize helper
   Variable *entryVar = entry->var;
   Variable *currentVar = current->var;
   Variable *checkVar = check->var;
 
-  Variable *checkEquals = nullptr;
+  Variable *checkEquals = nullptr;  // list of variables to be checked with the same name
   Variable *checkDifferent = nullptr;
   Variable *currentDifferent = nullptr;
   Dependency *depend = new Dependency;
@@ -308,10 +313,10 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
   depend->gVars = nullptr;
 
   //check for equals between current and check
-  while(nullptr != currentVar) {
+  while(nullptr != currentVar) {  // iterate over all variables of current partial problem
     checkVar = check->var;
     while(nullptr != checkVar) {
-      if(strcmp(currentVar->name,checkVar->name) == 0) {
+      if(strcmp(currentVar->name,checkVar->name) == 0) {  // Add to list for checkEquals
         if(nullptr == checkEquals) {
           checkEquals = new Variable(checkVar->name);
         } else {
@@ -329,8 +334,9 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
   while(nullptr != tmpCheckEquals) {
     found = false;
     entryVar = entry->var;
-    while(nullptr != entryVar) {
+    while(nullptr != entryVar) {  //  compare all variables in checkEquals with those in entry problem
       if(strcmp(entryVar->name,tmpCheckEquals->name) == 0) {
+        //  found G Independency, add it to gVars
         found = true;
         if(nullptr == depend->gVars) {
           depend->gVars = new Variable(entryVar->name);
@@ -348,8 +354,8 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
     tmpCheckEquals = tmpCheckEquals->next;
   }
 
-//look for all that are in current but not in check
-  currentVar = current->var;
+//look for all variables that are in current but not in check
+  currentVar = current->var;  //  reset currentVar
   while(nullptr != currentVar) {
     found = false;
     tmpCheckEquals = checkEquals;
@@ -359,7 +365,7 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
       }
       tmpCheckEquals = tmpCheckEquals->next;
     }
-    if(!found) {
+    if(!found) {  //  append variable name to the list
       if(nullptr == currentDifferent) {
         currentDifferent = new Variable(currentVar->name);
       } else {
@@ -372,16 +378,16 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
 //check for I independency on current site and absolute independency
   while(nullptr != currentDifferent) {
     entryVar = entry->var;
-    while(nullptr != entryVar) {
-      if(strcmp(currentDifferent->name,entryVar->name) == Independency::DEFAULT) {
+    while(nullptr != entryVar) {  // Check all variable against the ones that are different
+      if(strcmp(currentDifferent->name,entryVar->name) == 0) {
         if(nullptr == depend->iVars) {
           depend->iVars = new Variable(entryVar->name);
           if(depend->type == Independency::G) {
-            depend->type = Independency::GI;
+            depend->type = Independency::GI;  // if arleady G -> GI
           } else {
-            depend->type = Independency::I;
+            depend->type = Independency::I; // I 
           }
-        } else {
+        } else {  // Add variable to the variable list
           depend->iVars->appendVar(new Variable(entryVar->name));
         }
       }
@@ -389,13 +395,13 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
     }
     currentDifferent = currentDifferent->next;
   }
-  if(depend->type == Independency::DEFAULT) {
+  if(depend->type == Independency::DEFAULT) { //  if still no dependency -> absolute independent
     depend->type = Independency::ABSOLUTE;
     return depend;
   }
 
   if(depend->type == Independency::GI || depend->type == Independency::I) {
-    //look for all that are in check but not in current
+    //look for all variables that are in check but not in current
     checkVar = check->var;
     while(nullptr != checkVar) {
       found = false;
@@ -421,9 +427,9 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
         entryVar = entry->var;
         while(nullptr != entryVar) {
           if(strcmp(checkDifferent->name,entryVar->name) == 0) {
-            if(depend->iVars == 0) {
+            if(depend->iVars == nullptr) {
               depend->iVars = new Variable(entryVar->name);
-              if(depend->type == Independency::G) {
+              if(depend->type == Independency::G) { //  if already G independet -> GI independent
                 depend->type = Independency::GI;
               } else {
                 depend->type = Independency::I;
@@ -437,37 +443,43 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
         checkDifferent = checkDifferent->next;
       }
     }
+    // return final dependency
     return depend;
   }
 
 void paperAlgorithm(PartialProblem *currPartProb) {
+  // Init entry problem, set first partial problem
   PartialProblem *eProb = currPartProb;
   Node *eNode = eProb->node;
   currPartProb = currPartProb->next;
   //part 2.1.1
-  if(currPartProb != nullptr) {
+  if(currPartProb != nullptr) { // first partial problem
     eNode->addOutput(1, Type::RETURN, currPartProb->node);
+    // Connect node to entry node
     Node *leftUNode = connectWithEntry(eNode,genANode(currPartProb->node));
     //part 2.1.2
     currPartProb = currPartProb->next;
     if(currPartProb != nullptr) {
       if(currPartProb->node->type == Type::UPDATE){ //second partial problem
+        // create copy node for all following partial problems
         Node *cNode = new Node(Type::COPY, nullptr, nullptr);
         eNode->insertAfter(cNode);
         cNode->addOutput(1, 0, eNode->out->target);
         eNode->out->target = cNode;
 
-        while(currPartProb != nullptr) {
+        while(currPartProb != nullptr) {  // loop over all partial problems
           if(currPartProb->node->type == Type::UPDATE) {
+            // Add copy node as input to update node
             cNode->addOutput(1, 0, currPartProb->node);
             PartialProblem *leftProb = currPartProb->prev;
             Node *rightNode = currPartProb->node;
-            bool absoluteInd = true;
+            bool absoluteInd = true;  // assume absolute independency
 
-            while(leftProb->node->type != Type::ENTRY) {
+            while(leftProb->node->type != Type::ENTRY) {  // Check dependencies from right to left
+              // Check for dependency
               Dependency *depend = checkDependency(eProb, currPartProb, leftProb);
             
-              switch(depend->type){
+              switch(depend->type){ // generate nodes according to independency
               case Independency::DEPENDEND : 
                 rightNode = genAbsouluteDependency(leftProb->getLastNode(),rightNode);
                 absoluteInd = false;
@@ -487,27 +499,27 @@ void paperAlgorithm(PartialProblem *currPartProb) {
               }
               leftProb = leftProb->prev;
             }
-            if(absoluteInd) {
+            if(absoluteInd) { // independent -> create apply node
               rightNode = genANode(rightNode);
             }
             leftUNode = connectWithEntry(leftUNode,rightNode);
             currPartProb = currPartProb->next;
-            } else {
+            } else {  // no update -> no dependency
               break;
             }
           }
         }
-
+        //  Connect return node
         Node *rNode = new Node(Type::RETURN, nullptr, nullptr);
         leftUNode->insertAfter(rNode);
         leftUNode->addOutput(1, 0, rNode);
 
-      } else {
+      } else {  // only one partial problem -> insert return node
         Node *rNode = new Node(Type::RETURN, nullptr, nullptr);
         leftUNode->insertAfter(rNode);
         leftUNode->addOutput(1, 0, rNode);
       }
-    } else {
+    } else {  // No partial problem -> insert return node
       Node *rNode = new Node(Type::RETURN, nullptr, nullptr);
       eNode->insertAfter(rNode);
       eNode->addOutput(1, 0, rNode);

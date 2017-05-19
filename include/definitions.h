@@ -6,15 +6,15 @@ enum Independency {
   DEFAULT, DEPENDEND, G, I, GI, ABSOLUTE
 };
 
-enum Type : unsigned char { 
+enum Type : unsigned char {
   // Type of Nodes
   // Temp gets casted into another Type when needed
-  APPLY = 'A', 
-  COPY = 'C', 
-  UPDATE = 'U', 
+  APPLY = 'A',
+  COPY = 'C',
+  UPDATE = 'U',
   ENTRY = 'E',
-  RETURN = 'R', 
-  GROUND = 'G', 
+  RETURN = 'R',
+  GROUND = 'G',
   INDEPENDENCE = 'I',
   TEMP = 'T'
 };
@@ -89,6 +89,7 @@ struct Node {
 };
 
 struct PartialProblem {
+  char *info;
   struct Variable *var;
   struct Node *node;
   struct PartialProblem *next;
@@ -109,6 +110,25 @@ struct Dependency {
   struct Variable *iVars;
 };
 
+struct PrintList {
+  Node *node;
+  char *ppInfo;
+  PrintList *next;
+
+  PrintList(Node *n, char* info) :
+  node(n), ppInfo(info) {
+    next = nullptr;
+  }
+
+  void append(PrintList *input) {
+    if (nullptr != next) {
+      next->append(input);
+    } else {
+      next = input;
+    }
+  }
+};
+
 // Method declarations
 
 void yyerror(char *);
@@ -125,7 +145,7 @@ Node *genGIIndependency(Node *, Node *, Variable *, Variable *);
 
 Dependency *checkDependency(PartialProblem *, PartialProblem *, PartialProblem *);
 
-Node *connectAndNumberNodes(PartialProblem *);
+PrintList *numberAndOrderNodes(PartialProblem *);
 void printTableEntry();
 void printTable();
 

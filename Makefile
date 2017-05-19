@@ -5,7 +5,7 @@ SRC=src
 GENSRC=build
 
 all: generate
-	$(CC) $(GENSRC)/*.c $(CCLIBS) -lm -g -o $(BINARY) #> /dev/null 2>&1
+	$(CC) $(GENSRC)/*.c $(CCLIBS) -lm -g -o $(BINARY) > /dev/null 2>&1
 
 generate:
 	flex -o $(GENSRC)/lex.yy.c $(SRC)/prolog.l

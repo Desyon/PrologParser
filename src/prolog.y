@@ -132,6 +132,7 @@ param:  CONST
 void genPartialProblem(Type type, char *info){
   PartialProblem *ptr = new PartialProblem;
   ptr->var = varListHead;
+  ptr->info = info;
   ptr->next = nullptr;
   ptr->prev = nullptr;
   ptr->node = new Node(type, nullptr, varListHead);
@@ -298,7 +299,6 @@ Node *genGIIndependency(Node *left, Node *right, Variable *gVars, Variable *iVar
 }
 
 Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  PartialProblem *check) { // check dependencies between two partial problems
-  
   // Initialize helper
   Variable *entryVar = entry->var;
   Variable *currentVar = current->var;
@@ -478,13 +478,13 @@ void paperAlgorithm(PartialProblem *currPartProb) {
             while(leftProb->node->type != Type::ENTRY) {  // Check dependencies from right to left
               // Check for dependency
               Dependency *depend = checkDependency(eProb, currPartProb, leftProb);
-            
+              
               switch(depend->type){ // generate nodes according to independency
               case Independency::DEPENDEND : 
                 rightNode = genAbsouluteDependency(leftProb->getLastNode(),rightNode);
                 absoluteInd = false;
                 break;
-              case Independency::G : 
+              case Independency::G :
                 rightNode = genGIndependency(leftProb->getLastNode(),rightNode,depend->gVars);
                 absoluteInd = false;
                 break;
@@ -528,41 +528,90 @@ void paperAlgorithm(PartialProblem *currPartProb) {
 
 int main(int argc, char **argv) {
 
+  std::cout << "Program started. Setting up..." << std::endl;
+
   varListHead = nullptr;
   varListTail = nullptr;
   firstPartProb = nullptr;
   lastPartProb = nullptr;
 
+  std::cout << "Running Parser..." << std::endl;
   yyparse();
+  std::cout << std::endl << "Generating intermediate code..." << std::endl;
   paperAlgorithm(firstPartProb);
+  std::cout << std::endl;
   printTable();
   return 0;
 }
 
-Node *connectAndNumberNodes(PartialProblem *pp) {
-  Node *head = pp->node;
-  Node *current = head;
+PrintList *numberAndOrderNodes(PartialProblem *pp) {
+  PrintList *print = nullptr;
+  Node *current = pp->node;
+  // set intermediate pointer to stall R Node until the end
+  Node *rNode = nullptr;
   int index = 1;
 
-  while(pp!=0) {
-    while(current->next != nullptr) {
-      current->index = index;
-      index++;
+  // loop through all partial problems
+  while(nullptr != pp) {
+    // loop through all nodes of the partial problem
+    while(nullptr != current->next) {
+      current->index = index++;
+
+      // check if print list already exists
+      if(nullptr == print) {
+        PrintList *insert;
+        if(Type::ENTRY == current->type || Type::UPDATE == current->type){
+          insert = new PrintList(current, pp->info);
+        } else {
+          insert = new PrintList(current, nullptr);
+        }
+
+        // set node as print list
+        print = insert;
+      } else {
+        PrintList *insert;
+        if(Type::ENTRY == current->type || Type::UPDATE == current->type){
+          insert = new PrintList(current, pp->info);
+        } else {
+          insert = new PrintList(current, nullptr);
+        }
+        // append node to print list
+        print->append(insert);
+      }
       current = current->next;
     }
+
+    // append first node of next partial problem
     pp = pp->next;
     if(pp != nullptr) {
       current->next = pp->node;
     }
-    current->index = index;
-    index++;
-    current = current->next;
+
+    // find and stall R node to append in the end
+    if(Type::RETURN == current->type) {
+      rNode = current;
+      current = current->next;
+    } else {
+      current->index = index++;
+      PrintList *insert;
+      if(Type::ENTRY == current->type || Type::UPDATE == current->type){
+        insert = new PrintList(current, pp->info);
+      } else {
+        insert = new PrintList(current, nullptr);
+      }
+      print->append(insert);
+      current = current->next;
+    }
   }
 
-  return head;
+  // reappend R node to print list
+  rNode->index = index;
+  print->append(new PrintList(rNode, nullptr));
+
+  return print;
 }
 
-void printTableEntry(Node *node){
+void printTableEntry(Node *node, char* info){
   // TODO Maybe orient on type of node for nicer output.
   using namespace std;
 
@@ -584,27 +633,35 @@ void printTableEntry(Node *node){
     cout << "\t";
   }
 
+  if (nullptr != info) {
+    cout << info;
+  }
+
   Variable *vars = node->vars;
-  while(nullptr != vars) {
-    cout << vars->name;
-    if(vars->next) cout << ",";
-    vars = vars->next;
+  if(vars){
+    cout << "(";
+    while(nullptr != vars) {
+      cout << vars->name;
+      if(vars->next) cout << ",";
+      vars = vars->next;
+    }
+    cout << ")";
   }
   cout << endl;
 }
 
 void printTable() {
-  Node *current = connectAndNumberNodes(firstPartProb);
+  PrintList *current = numberAndOrderNodes(firstPartProb);
 
   // newline before table
   std::cout << std::endl;
 
   while(current != nullptr) {
-    printTableEntry(current);
+    printTableEntry(current->node, current->ppInfo);
     current = current->next;
   }
 }
 
 void yyerror (char *message){
-  std::cout << std::endl << "This is not a valid prolog syntax." << std::endl;
+  std::cout << std::endl << "Parser error in line " << lines << std::endl;
 }

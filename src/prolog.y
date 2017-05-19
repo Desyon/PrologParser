@@ -338,6 +338,7 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
       if(strcmp(entryVar->name,tmpCheckEquals->name) == 0) {
         //  found G Independency, add it to gVars
         found = true;
+        std::cout << "Found G Independency in " << current->info << " with " << check->info << std::endl;
         if(nullptr == depend->gVars) {
           depend->gVars = new Variable(entryVar->name);
           depend->type = Independency::G;
@@ -348,6 +349,7 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
       entryVar = entryVar->next;
     }
     if(!found) {
+        std::cout << "Found Dependence in " << current->info << " with " << check->info << std::endl;
       depend->type = Independency::DEPENDEND;
       return depend;
     }
@@ -384,7 +386,9 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
           depend->iVars = new Variable(entryVar->name);
           if(depend->type == Independency::G) {
             depend->type = Independency::GI;  // if arleady G -> GI
+        std::cout << "Found GI Independency in " << current->info << " with " << check->info << std::endl;
           } else {
+        std::cout << "Found I Independency in " << current->info << " with " << check->info << std::endl;
             depend->type = Independency::I; // I 
           }
         } else {  // Add variable to the variable list
@@ -431,8 +435,10 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
               depend->iVars = new Variable(entryVar->name);
               if(depend->type == Independency::G) { //  if already G independet -> GI independent
                 depend->type = Independency::GI;
+                std::cout << "Found GI Independency in " << check->info << " with " << current->info << std::endl;
               } else {
                 depend->type = Independency::I;
+                std::cout << "Found I Independency in " << check->info << " with " << current->info << std::endl;
               }
             } else {
               depend->iVars->appendVar(new Variable(entryVar->name));

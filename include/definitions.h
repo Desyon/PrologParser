@@ -79,7 +79,8 @@ struct Node {
     next = node;
   }
 
-  void addOutput(int p, char t, Node *targ) {
+  void addOutput(int p, char 
+  t, Node *targ) {
     if(nullptr != out) {
       out->append(new Output(p, t, targ));
     } else {
@@ -102,8 +103,20 @@ struct PartialProblem {
     }
     return tmp;
   }
+
 };
 
+  PartialProblem * get_dat_pp(char *i){
+    PartialProblem *pp = new PartialProblem;
+    pp->info = i;
+    pp->var = nullptr;
+    pp->node = nullptr;
+    pp->next = nullptr;
+    pp->prev = nullptr;
+      
+    return pp;
+    }
+    
 struct Dependency {
   Independency type;
   struct Variable *gVars;
@@ -123,6 +136,24 @@ struct PrintList {
   void append(PrintList *input) {
     if (nullptr != next) {
       next->append(input);
+    } else {
+      next = input;
+    }
+  }
+};
+
+struct HelperVariable {
+  struct Variable *var;
+  struct PartialProblem *pp;
+  struct HelperVariable *next;
+  
+  HelperVariable(Variable *v, PartialProblem *p) :
+    var(v), pp(p) {
+    }
+      
+  void appendVar(HelperVariable *input) {
+    if (nullptr != next) {
+      next->appendVar(input);
     } else {
       next = input;
     }

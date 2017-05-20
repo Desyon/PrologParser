@@ -15,7 +15,7 @@ Variable *varListHead;
 Variable *varListTail;
 PartialProblem *firstPartProb;
 PartialProblem *lastPartProb;
-Variable *additionalKnown = new Variable("init");
+HelperVariable *additionalKnown = new HelperVariable(new Variable("init"), get_dat_pp("x"));
 
 %}
 %union{
@@ -304,7 +304,7 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
   
   /*
   *
-  *   Issue problably being, that we ignore that helper variables are no helpers
+  *   Issue problably was, that we ignore that helper variables are no helpers
   *   anymore, when we have tested them on dependence.
   *
   */
@@ -323,7 +323,7 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
   depend->gVars = nullptr;
   
   //  For Temps that are known
-  Variable *addKnown = additionalKnown;
+  HelperVariable *addKnown = additionalKnown;
 
   //check for equals between current and check
   while(nullptr != currentVar) {  // iterate over all variables of current partial problem
@@ -362,41 +362,39 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
       }
       entryVar = entryVar->next;
     }
-    Variable *last;
+    HelperVariable *last;
     addKnown = additionalKnown;
     while(nullptr != addKnown){
-      if(strcmp(addKnown->name,tmpCheckEquals->name) == 0 && depend->type != Independency::DEPENDEND) {
+      if(strcmp(addKnown->var->name,tmpCheckEquals->name) == 0 && depend->type != Independency::DEPENDEND) {
+        if(strcmp(addKnown->pp->info, check->info) == 0) {
+          std::cout << "Found Dependence in " << current->info << " with " << check->info << std::endl;
+          depend->type = Independency::DEPENDEND;
+          return depend;
+        }
+        
         //  found G Independency, add it to gVars
         found = true;
         std::cout << "Found G Independency in " << current->info << " with " << check->info << std::endl;
         if(nullptr == depend->gVars) {
-          std::cout << "No Problem adding gVars" << std::endl;
-          depend->gVars = new Variable(addKnown->name);
-          std::cout << "No problem with that" << std::endl;
+          depend->gVars = new Variable(addKnown->var->name);
           depend->type = Independency::G;
         } else {
-          std::cout << "No Problem adding gVars in else" << std::endl;
-          depend->gVars->appendVar(new Variable(entryVar->name));
-          std::cout << "No Problem with appending" << std::endl;
+          depend->gVars->appendVar(new Variable(addKnown->var->name));
         }
       }
       last = addKnown;
-          std::cout << "Setting last" << std::endl;
       addKnown = addKnown->next;
-          std::cout << "Get next known" << std::endl;
     }
     if(!found) {
-      last->appendVar(tmpCheckEquals);
+      last->appendVar(new HelperVariable(tmpCheckEquals, check));
       std::cout << "Found Dependence in " << current->info << " with " << check->info << std::endl;
       depend->type = Independency::DEPENDEND;
 
     }
     tmpCheckEquals = tmpCheckEquals->next;
   }
-  std::cout << "All those now known:" << std::endl;
   addKnown = additionalKnown;
   while(addKnown != nullptr){
-    std::cout << addKnown->name << std::endl;
     addKnown = addKnown->next;
   }
   if(depend->type == Independency::DEPENDEND) return depend;
@@ -431,9 +429,9 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
           depend->iVars = new Variable(entryVar->name);
           if(depend->type == Independency::G) {
             depend->type = Independency::GI;  // if arleady G -> GI
-        std::cout << "Found GI Independency in " << current->info << " with " << check->info << std::endl;
+            std::cout << "Found GI Independency in " << current->info << " with " << check->info << std::endl;
           } else {
-        std::cout << "Found I Independency in " << current->info << " with " << check->info << std::endl;
+            std::cout << "Found I Independency in " << current->info << " with " << check->info << std::endl;
             depend->type = Independency::I; // I 
           }
         } else {  // Add variable to the variable list
@@ -450,51 +448,7 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
     return depend;
   }
 
-/*  if(depend->type == Independency::GI || depend->type == Independency::I) {
-    //look for all variables that are in check but not in current
-    checkVar = check->var;
-    while(nullptr != checkVar) {
-      found = false;
-      tmpCheckEquals = checkEquals;
-      while(nullptr != tmpCheckEquals) {
-        if(strcmp(checkVar->name,tmpCheckEquals->name) == 0) {
-          found = true;
-        }
-        tmpCheckEquals = tmpCheckEquals->next;
-      }
-      if(!found) {
-        if(nullptr == checkDifferent) {
-          checkDifferent = new Variable(checkVar->name);
-          } else {
-            checkDifferent->appendVar(new Variable(checkVar->name));
-          }
-        }
-        checkVar = checkVar->next;
-      }
 
-      //check for i independency on check site
-      while(nullptr != checkDifferent) {
-        entryVar = entry->var;
-        while(nullptr != entryVar) {
-          if(strcmp(checkDifferent->name,entryVar->name) == 0) {
-            if(depend->iVars == nullptr) {
-              depend->iVars = new Variable(entryVar->name);
-              if(depend->type == Independency::G) { //  if already G independet -> GI independent
-                depend->type = Independency::GI;
-                std::cout << "Found GI Independency in " << check->info << " with " << current->info << std::endl;
-              } else {
-                depend->type = Independency::I;
-                std::cout << "Found I Independency in " << check->info << " with " << current->info << std::endl;
-              }
-            } else {
-              depend->iVars->appendVar(new Variable(entryVar->name));
-            }
-          }
-          entryVar = entryVar->next;
-        }
-        checkDifferent = checkDifferent->next;
-      }
-    }*/
     // return final dependency
     return depend;
   }
@@ -664,7 +618,6 @@ PrintList *numberAndOrderNodes(PartialProblem *pp) {
 }
 
 void printTableEntry(Node *node, char* info){
-  // TODO Maybe orient on type of node for nicer output.
   using namespace std;
 
   cout << node->index << "\t" << static_cast<unsigned char>(node->type) << "\t";

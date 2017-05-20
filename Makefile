@@ -12,7 +12,7 @@ generate:
 	bison -dy $(SRC)/prolog.y -o $(GENSRC)/prolog.tab.c
 
 test: all
-	./prolog.exe < test/one.pl
+	./prolog.exe < test/two.pl 
 
 clean:
 	rm -rf $(GENSRC)/*

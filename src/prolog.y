@@ -427,6 +427,7 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
       if(strcmp(currentDifferent->name,entryVar->name) == 0) {
         if(nullptr == depend->iVars) {
           depend->iVars = new Variable(entryVar->name);
+          // TODO: check if you can enter the loop with GI Independency
           if(depend->type == Independency::G) {
             depend->type = Independency::GI;  // if arleady G -> GI
             std::cout << "Found GI Independency in " << current->info << " with " << check->info << std::endl;

@@ -1,4 +1,4 @@
-CC=g++
+CC=g++-6
 CCLIBS=-lfl
 BINARY=prolog.exe
 SRC=src
@@ -12,7 +12,7 @@ generate:
 	bison -dy $(SRC)/prolog.y -o $(GENSRC)/prolog.tab.c
 
 test: all
-	./prolog.exe < test/two.pl 
+	./prolog.exe < test/three.pl
 
 clean:
 	rm -rf $(GENSRC)/*

@@ -427,10 +427,29 @@ Dependency *checkDependency(PartialProblem *entry, PartialProblem *current,  Par
       if(strcmp(currentDifferent->name,entryVar->name) == 0) {
         if(nullptr == depend->iVars) {
           depend->iVars = new Variable(entryVar->name);
-          // TODO: check if you can enter the loop with GI Independency
           if(depend->type == Independency::G) {
-            depend->type = Independency::GI;  // if arleady G -> GI
-            std::cout << "Found GI Independency in " << current->info << " with " << check->info << std::endl;
+            depend->type = Independency::GI;  // if already G -> GI
+            Variable *knownGVars = depend->gVars;
+            Variable *checkVars = check->var;
+            int varsInCheckVars = 0;
+            int overlapping = 0;
+            
+            while (nullptr != knownGVars) {
+              while(nullptr != checkVars) {
+                varsInCheckVars++;
+                if(strcmp(knownGVars->name,checkVars->name) == 0) {
+                  overlapping++;
+                }
+                checkVars = checkVars->next;
+              }
+              knownGVars = knownGVars->next;
+            }
+            
+            if(varsInCheckVars == overlapping) {
+              depend->type = Independency::G;
+              std::cout << "Skipped I Independency in " << current->info << " with " << check->info << std::endl;
+            }
+            if(depend->type == Independency::GI) std::cout << "Found GI Independency in " << current->info << " with " << check->info << std::endl;
           } else {
             std::cout << "Found I Independency in " << current->info << " with " << check->info << std::endl;
             depend->type = Independency::I; // I 
